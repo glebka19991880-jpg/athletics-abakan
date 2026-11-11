@@ -61,5 +61,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+CSRF_TRUSTED_ORIGINS = ['https://athletics-abakan-production.up.railway.app']
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
