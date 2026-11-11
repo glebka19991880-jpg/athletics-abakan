@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>Загрузка участников из Excel</h1>
+  <p>Выберите соревнование и файл. Система автоматически прочитает лист "УЧАСТНИКИ".</p>
+  
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="button" style="background-color: #417690; color: white; padding: 10px 20px; border: none; cursor: pointer;">
+      Загрузить
+    </button>
+  </form>
+{% endblock %}
