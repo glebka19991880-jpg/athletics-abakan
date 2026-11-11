@@ -12,9 +12,14 @@ import os
 import dj_database_url
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('PGNAME', 'railway'),
+        'USER': os.environ.get('PGUSER', 'postgres'),
+        'PASSWORD': os.environ.get('PGPASSWORD', ''),
+        'HOST': os.environ.get('PGHOST', ''),
+        'PORT': os.environ.get('PGPORT', '5432'),
+    }
 }
 INSTALLED_APPS = [
     'django.contrib.admin',
