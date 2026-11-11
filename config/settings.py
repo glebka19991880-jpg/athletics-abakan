@@ -5,7 +5,7 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-for-dev')
-DEBUG =False 
+DEBUG =True 
 ALLOWED_HOSTS = ['*']
 
 # Настройка базы данных для Railway (жесткая привязка)
