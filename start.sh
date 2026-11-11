@@ -1,7 +1,5 @@
 #!/bin/bash
 
-sleep 5
-
 python manage.py migrate
 
 python manage.py shell -c "
