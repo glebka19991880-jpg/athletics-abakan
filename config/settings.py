@@ -14,7 +14,7 @@ import dj_database_url
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('PGNAME', 'railway'),
+        'NAME': os.environ.get('PGDATABASE', 'railway'),
         'USER': os.environ.get('PGUSER', 'postgres'),
         'PASSWORD': os.environ.get('PGPASSWORD', ''),
         'HOST': os.environ.get('PGHOST', ''),
