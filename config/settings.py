@@ -14,11 +14,11 @@ import dj_database_url
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('PGDATABASE', 'railway'),
-        'USER': os.environ.get('PGUSER', 'postgres'),
-        'PASSWORD': os.environ.get('PGPASSWORD', ''),
-        'HOST': os.environ.get('PGHOST', ''),
-        'PORT': os.environ.get('PGPORT', '5432'),
+        'NAME': 'railway',
+        'USER': 'postgres',
+        'PASSWORD': 'tJYnSwUHLykYagiTwLwLvIpIQepyUeyg',
+        'HOST': 'postgres.railway.internal',
+        'PORT': '5432',
     }
 }
 INSTALLED_APPS = [
