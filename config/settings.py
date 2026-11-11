@@ -8,12 +8,14 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-for-dev')
 DEBUG =True 
 ALLOWED_HOSTS = ['*']
 
+import os
+import dj_database_url
+
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://postgres:postgres@localhost:5432/postgres'
+        default=os.environ.get('DATABASE_URL')
     )
 }
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
