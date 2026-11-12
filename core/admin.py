@@ -25,7 +25,7 @@ def import_excel_view(request):
 
 @admin.register(Athlete)
 class AthleteAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'birth_date', 'rank', 'organization', 'competition')
+    list_display = ('full_name', 'birth_date', 'rank', 'organization')
     search_fields = ('full_name',)
     
     # Добавляем нашу кнопку в меню
