@@ -16,6 +16,7 @@ class Athlete(models.Model):
     region = models.CharField("Регион", max_length=100, blank=True)
     organization = models.CharField("Организация", max_length=200, blank=True)
     coach = models.CharField("Тренер", max_length=200, blank=True)
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="athletes", null=True, blank=True)
 
     def __str__(self):
         return self.full_name
