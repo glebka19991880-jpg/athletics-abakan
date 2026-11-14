@@ -5,19 +5,15 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-for-dev')
-DEBUG =True 
+DEBUG = True
 ALLOWED_HOSTS = ['*']
 
-import os
-import dj_database_url
-
-import dj_database_url
-
-import dj_database_url
-
 DATABASES = {
-    'default': dj_database_url.parse('postgresql://postgres:xkrYKUvRVtvAkoxKHKJdqneoLyPnwKgD@postgres-z0ui.railway.internal:5432/railway')
+    'default': dj_database_url.config(
+        default='postgresql://postgres:xkrYKUvRVtVAkoxkHKJdqqeolypPmwkgD@postgres-z0ui.railway.internal:5432/railway'
+    )
 }
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -44,7 +40,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'core' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -58,7 +54,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+
 AUTH_PASSWORD_VALIDATORS = []
+
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Asia/Krasnoyarsk'
 USE_I18N = True
