@@ -99,22 +99,28 @@ def export_long_jump_protocol(athletes, event_info):
     _merge_and_write(ws, "S8:U8", "Дата проведения", FONT_SMALL); _merge_and_write(ws, "V8:X8", str(event_info.get("date", "")), FONT_SMALL)
     _merge_and_write(ws, "S9:U9", "Время", FONT_SMALL); _merge_and_write(ws, "V9:X9", str(event_info.get("time", "")), FONT_SMALL)
 
+    # --- СЧИТАЕМ МЕСТА ---
     results = [a.get("result") for a in athletes]
     places = calculate_place(results)
+
+    # --- ПРИВЯЗЫВАЕМ МЕСТО К КАЖДОМУ СПОРТСМЕНУ ---
+    for i, a in enumerate(athletes):
+        a["place"] = places[i]
+
+    # --- СОРТИРУЕМ ПО УБЫВАНИЮ РЕЗУЛЬТАТА (1-е место вверх) ---
+    athletes.sort(key=lambda x: x.get("result") if x.get("result") is not None else -1, reverse=True)
 
     headers = ["№ уч.", "№п/п", "Фамилия Имя", "Дата рождения", "Заявл. разряд", "Регион, МО", "Ведомственная принадлежность Организация", "Рез-т квал.", "1", "Ветер", "2", "Ветер", "3", "Ветер", "Ж", "4", "Ветер", "5", "Ветер", "6", "Ветер", "Результат", "", "Выполн. разряд", "тренеры", "Очки и Бонус"]
     for idx, h in enumerate(headers, start=1):
         cell = ws.cell(row=12, column=idx, value=h); cell.font = FONT_SMALL; cell.alignment = ALIGN_CENTER; cell.border = BORDER
-    athletes.sort(key=lambda x: x.get("result") if x.get("result") is not None else -1, reverse=True)
 
-    start_row = 13
-    for i, a in enumerate(athletes):
     start_row = 13
     for i, a in enumerate(athletes):
         r = start_row + i
         attempts = (a.get("attempts") or []) + [None] * (6 - len(a.get("attempts") or []))
         winds = (a.get("winds") or []) + [None] * (6 - len(a.get("winds") or []))
-        result, place = a.get("result"), places[i]
+        result = a.get("result")
+        place = a.get("place") # Берем место, которое привязали ранее
         
         row_values = [
             a.get("num", ""), a.get("order", ""), a.get("name", ""), str(a.get("birth", "")), a.get("rank", ""), a.get("region", ""), a.get("org", ""),
