@@ -63,6 +63,7 @@
                 <div class="attempts">
                     {% for i in "123456" %}
                     <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <!-- Поле для РЕЗУЛЬТАТА -->
                         <input type="text" name="attempt_{{ i }}" placeholder="Рез-т {{ i }}"
                             {% if existing_result %}
                                 {% if i == '1' %}value="{{ existing_result.attempt_1|default_if_none:'' }}"
@@ -74,7 +75,18 @@
                                 {% endif %}
                             {% endif %}
                         >
-                        <input type="text" name="wind_{{ i }}" placeholder="Ветер {{ i }}">
+                        <!-- Поле для ВЕТРА (теперь тоже подтягивает старые значения) -->
+                        <input type="text" name="wind_{{ i }}" placeholder="Ветер {{ i }}"
+                            {% if existing_result %}
+                                {% if i == '1' %}value="{{ existing_result.wind_1|default_if_none:'' }}"
+                                {% elif i == '2' %}value="{{ existing_result.wind_2|default_if_none:'' }}"
+                                {% elif i == '3' %}value="{{ existing_result.wind_3|default_if_none:'' }}"
+                                {% elif i == '4' %}value="{{ existing_result.wind_4|default_if_none:'' }}"
+                                {% elif i == '5' %}value="{{ existing_result.wind_5|default_if_none:'' }}"
+                                {% elif i == '6' %}value="{{ existing_result.wind_6|default_if_none:'' }}"
+                                {% endif %}
+                            {% endif %}
+                        >
                     </div>
                     {% endfor %}
                 </div>
@@ -86,7 +98,7 @@
                 {% endif %}
                 
                 <br>
-                <!-- Вот здесь магия: formmethod="post" заставит кнопку отправить данные через POST, не ломая GET-выбор -->
+                <!-- Кнопка отправляет данные POST-запросом, не ломая GET-выбор -->
                 <button type="submit" formmethod="post">Сохранить результат</button>
             </form>
         {% endif %}
