@@ -42,12 +42,9 @@ class Result(models.Model):
     attempt_5 = models.FloatField("Попытка 5", null=True, blank=True)
     attempt_6 = models.FloatField("Попытка 6", null=True, blank=True)
     
-    # ПОЛЯ WIND УДАЛЕНЫ
-    
     final_result = models.FloatField("Итоговый результат", null=True, blank=True)
-    is_record = models.BooleanField("Рекорд", default=False)
-    place = models.IntegerField("Место", null=True, blank=True)
-    assigned_rank = models.CharField("Присвоенный разряд", max_length=20, blank=True)
+    
+    # УДАЛЕНО ВСЁ ЛИШНЕЕ, ЧТО НЕ СУЩЕСТВУЕТ В БАЗЕ
 
 class ApiKey(models.Model):
     key = models.CharField(max_length=64, unique=True)
