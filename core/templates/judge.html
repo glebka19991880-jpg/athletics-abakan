@@ -36,6 +36,9 @@
         </form>
 
         {% if current_event %}
+            <div style="text-align: right; margin-bottom: 10px;">
+        <a href="{% url 'export_excel' current_event.id %}" style="background-color: #007bff; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px;">Скачать протокол (Excel)</a>
+    </div>
             <hr>
             <form method="post">
                 {% csrf_token %}
