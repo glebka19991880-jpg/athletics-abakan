@@ -43,14 +43,17 @@
             <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="event_id" value="{{ current_event.id }}"><input type="text" name="wind_1" placeholder="Ветер">
-                
-                <label>Выберите участника:</label>
-                <select name="athlete_id" required onchange="this.form.submit()">
-    <option value="">--- Выберите спортсмена ---</option>
-    {% for a in athletes %}
-        <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
-            {{ a.full_name }} ({{ a.birth_date|date:"Y" }})
-                <label>Попытки (1-6):</label>
+                         <label>Выберите участника:</label>
+            <select name="athlete_id" required onchange="this.form.submit()" style="width: 100%; padding: 8px; margin-bottom: 20px;">
+                <option value="">--- Выберите спортсмена ---</option>
+                {% for a in athletes %}
+                    <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
+                        {{ a.full_name }} ({{ a.birth_date|date:"Y" }})
+                    </option>
+                {% endfor %}
+            </select>
+
+            <label>Попытки (1-6):</label>
             <div class="attempts" style="display: flex; gap: 10px; margin-bottom: 15px;">
                 {% for i in "123456" %}
                 <div style="display: flex; flex-direction: column; gap: 5px;">
