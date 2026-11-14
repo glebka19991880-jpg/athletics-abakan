@@ -58,15 +58,15 @@
                 {% csrf_token %}
                 <input type="hidden" name="event_id" value="{{ current_event.id }}">
                 
-                <label>Выберите участника:</label>
-                <select name="athlete_id" required onchange="changeAthlete(this.value)" style="margin-bottom: 20px;">
-                    <option value="">--- Выберите спортсмена ---</option>
-                    {% for a in athletes %}
-                        <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
-                            {{ a.full_name }} ({{ a.birth_date|date:"Y" }})
-                        </option>
-                    {% endfor %}
-                </select>
+                           <label>Выберите участника:</label>
+            <select name="athlete_id" required onchange="this.form.submit()" style="width: 100%; padding: 8px; margin-bottom: 20px;">
+                <option value="">--- Выберите спортсмена ---</option>
+                {% for a in athletes %}
+                    <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
+                        {{ a.full_name|default:a }}
+                    </option>
+                {% endfor %}
+            </select>
 
                 <!-- Таймер попытки -->
                 <div class="timer-box">
