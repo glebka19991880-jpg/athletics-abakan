@@ -6,7 +6,8 @@ from .models import Athlete, Event, Result, ApiKey
 from .forms import ImportExcelForm
 import openpyxl
 from django.http import HttpResponse
-from .long_jump import export_technical_protocol
+# Убедитесь, что в файле long_jump.py функция называется export_long_jump_protocol
+from .long_jump import export_long_jump_protocol 
 
 
 def home(request):
@@ -42,9 +43,9 @@ def judge_input(request):
         
         # Вспомогательная функция для безопасного перевода текста в число
         def parse_float(val):
-            if not val or val.strip() == '': 
+            if not val or str(val).strip() == '': 
                 return 0.0
-            val = val.strip().upper()
+            val = str(val).strip().upper()
             # Если судья ввел X или прочерк - это неудачная попытка (-1.0)
             if val in ['X', 'Х', '-', 'МИМО', 'НЕУДАЧА']: 
                 return -1.0
@@ -170,20 +171,26 @@ def export_long_jump(request, event_id):
 
     results = Result.objects.filter(event_id=event_id).select_related("athlete")
     
-       athletes_data = []
-for r in results:
+    # ИСПРАВЛЕН ОТСТУП ЗДЕСЬ
+    athletes_data = []
+    for r in results:
         athletes_data.append({
-            "num": r.id, # Используем ID вместо номера, так как поля number нет
+            "num": r.id, 
             "order": r.id,
             "name": str(r.athlete), 
             "birth": getattr(r.athlete, 'birth_date', ''),
             "rank": getattr(r.athlete, 'rank', ''),
             "region": getattr(r.athlete, 'region', ''),
             "org": getattr(r.athlete, 'organization', ''),
+            # Берем попытки из БД
             "attempts": [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6],
-            "winds": [None, None, None, None, None, None], 
+            # Ветер из БД (если у вас в модели Result есть поля wind_1...wind_6, они подтянутся. Если нет - вернет ошибку)
+            "winds": [
+                getattr(r, 'wind_1', None), getattr(r, 'wind_2', None), getattr(r, 'wind_3', None),
+                getattr(r, 'wind_4', None), getattr(r, 'wind_5', None), getattr(r, 'wind_6', None)
+            ], 
             "result": r.final_result, 
-            "coaches": getattr(r.athlete, 'coach', ''), # ТУТ БЫЛО coaches, СТАЛО coach
+            "coaches": getattr(r.athlete, 'coach', ''), 
         })
 
     event_info = {
@@ -199,7 +206,9 @@ for r in results:
         "rr": ("", ""),
     }
 
-    wb = export_technical_protocol(athletes_data, event_info)
+    # Проверьте, как точно называется функция в long_jump.py!
+    # Если вы переименовали её в export_technical_protocol, то верните это название тут.
+    wb = export_long_jump_protocol(athletes_data, event_info) 
 
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
