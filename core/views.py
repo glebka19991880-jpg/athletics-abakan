@@ -171,7 +171,7 @@ def export_long_jump(request, event_id):
     results = Result.objects.filter(event_id=event_id).select_related("athlete")
     
        athletes_data = []
-    for r in results:
+for r in results:
         athletes_data.append({
             "num": r.id, # Используем ID вместо номера, так как поля number нет
             "order": r.id,
