@@ -42,12 +42,7 @@ class Result(models.Model):
     attempt_5 = models.FloatField("Попытка 5", null=True, blank=True)
     attempt_6 = models.FloatField("Попытка 6", null=True, blank=True)
     
-    wind_1 = models.FloatField("Ветер 1", null=True, blank=True)
-    wind_2 = models.FloatField("Ветер 2", null=True, blank=True)
-    wind_3 = models.FloatField("Ветер 3", null=True, blank=True)
-    wind_4 = models.FloatField("Ветер 4", null=True, blank=True)
-    wind_5 = models.FloatField("Ветер 5", null=True, blank=True)
-    wind_6 = models.FloatField("Ветер 6", null=True, blank=True)
+    # ПОЛЯ WIND УДАЛЕНЫ
     
     final_result = models.FloatField("Итоговый результат", null=True, blank=True)
     is_record = models.BooleanField("Рекорд", default=False)
