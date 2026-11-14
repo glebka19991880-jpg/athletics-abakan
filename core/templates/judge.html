@@ -42,7 +42,7 @@
             <hr>
             <form method="post">
                 {% csrf_token %}
-                <input type="hidden" name="event_id" value="{{ current_event.id }}">
+                <input type="hidden" name="event_id" value="{{ current_event.id }}"><input type="text" name="wind_1" placeholder="Ветер">
                 
                 <label>Выберите участника:</label>
                 <select name="athlete_id" required>
