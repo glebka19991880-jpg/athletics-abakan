@@ -11,15 +11,10 @@ ALLOWED_HOSTS = ['*']
 import os
 import dj_database_url
 
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'railway',
-        'USER': 'postgres',
-        'PASSWORD': 'tJYnSwUHLykYagiTwLwLvIpIQepyUeyg',
-        'HOST': 'postgres.railway.internal',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
 }
 INSTALLED_APPS = [
     'django.contrib.admin',
