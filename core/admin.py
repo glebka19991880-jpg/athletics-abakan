@@ -26,7 +26,7 @@ def import_excel_view(request):
 class AthleteAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'birth_date', 'rank', 'organization')
     search_fields = ('full_name',)
-    change_list_template = 'admin/change_list.html'
+    change_list_template = 'admin/change_list.html' # Оставляем шаблон
 
     def get_urls(self):
         urls = super().get_urls()
@@ -35,6 +35,7 @@ class AthleteAdmin(admin.ModelAdmin):
         ]
         return my_urls + urls
         
+    # Добавляем кастомную кнопку через actions
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
         return super().changelist_view(request, extra_context=extra_context)
