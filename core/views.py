@@ -87,3 +87,37 @@ def input_result(request):
         return JsonResponse({"status": "ok", "id": result.id})
     
     return JsonResponse({"error": "Метод не разрешен"}, status=405)
+import openpyxl
+from django.http import HttpResponse
+
+def export_excel(request, event_id):
+    # Берем вид и его результаты
+    event = Event.objects.get(id=event_id)
+    results = Result.objects.filter(event=event).order_by('-final_result') # Сортируем по убыванию (для прыжков)
+    
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = event.name
+    
+    # Заголовки
+    ws.append(["Место", "ФИО", "Год рождения", "Организация", "Попытка 1", "Попытка 2", "Попытка 3", "Попытка 4", "Попытка 5", "Попытка 6", "Лучший результат"])
+    
+    for index, res in enumerate(results, start=1):
+        ws.append([
+            index,
+            res.athlete.full_name,
+            res.athlete.birth_date.year if res.athlete.birth_date else "",
+            res.athlete.organization,
+            res.attempt_1 or "",
+            res.attempt_2 or "",
+            res.attempt_3 or "",
+            res.attempt_4 or "",
+            res.attempt_5 or "",
+            res.attempt_6 or "",
+            res.final_result or ""
+        ])
+        
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{event.name}.xlsx"'
+    wb.save(response)
+    return response
