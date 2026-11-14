@@ -10,7 +10,7 @@
         button { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
         button:hover { background: #218838; }
         .attempts { display: flex; gap: 10px; margin-bottom: 15px; }
-        .attempts input { width: 60px; text-align: center; }
+        .attempts input { width: 70px; text-align: center; }
         label { font-weight: bold; display: block; margin-top: 10px; }
         .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
     </style>
@@ -25,6 +25,7 @@
             {% endfor %}
         {% endif %}
 
+        <!-- Форма 1: Только для выбора соревнования (GET) -->
         <form method="get">
             <label>Выберите вид:</label>
             <select name="event" onchange="this.form.submit()">
@@ -36,50 +37,57 @@
         </form>
 
         {% if current_event %}
-            <div style="text-align: right; margin-bottom: 10px;">
-        <a href="{% url 'export_long_jump' current_event.id %}" style="background-color: #007bff; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px;">Скачать протокол (Excel)</a>
-    </div>
-            <hr>
-           <form method="GET">
-                {% csrf_token %}
-                <input type="hidden" name="event_id" value="{{ current_event.id }}"><input type="text" name="wind_1" placeholder="Ветер">
-                         <label>Выберите участника:</label>
-            <select name="athlete_id" required onchange="this.form.submit()" style="width: 100%; padding: 8px; margin-bottom: 20px;">
-                <option value="">--- Выберите спортсмена ---</option>
-                {% for a in athletes %}
-                    <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
-                        {{ a.full_name }} ({{ a.birth_date|date:"Y" }})
-                    </option>
-                {% endfor %}
-            </select>
-
-            <label>Попытки (1-6):</label>
-            <div class="attempts" style="display: flex; gap: 10px; margin-bottom: 15px;">
-                {% for i in "123456" %}
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <input type="text" name="attempt_{{ i }}" placeholder="Рез-т {{ i }}" style="width: 70px;"
-                        {% if existing_result %}
-                            {% if i == '1' %}value="{{ existing_result.attempt_1|default_if_none:'' }}"
-                            {% elif i == '2' %}value="{{ existing_result.attempt_2|default_if_none:'' }}"
-                            {% elif i == '3' %}value="{{ existing_result.attempt_3|default_if_none:'' }}"
-                            {% elif i == '4' %}value="{{ existing_result.attempt_4|default_if_none:'' }}"
-                            {% elif i == '5' %}value="{{ existing_result.attempt_5|default_if_none:'' }}"
-                            {% elif i == '6' %}value="{{ existing_result.attempt_6|default_if_none:'' }}"
-                            {% endif %}
-                        {% endif %}
-                    >
-                    <input type="text" name="wind_{{ i }}" placeholder="Ветер {{ i }}" style="width: 70px;">
-                </div>
-                {% endfor %}
+            <div style="text-align: right; margin-top: 15px; margin-bottom: 10px;">
+                <a href="{% url 'export_long_jump' current_event.id %}" style="background-color: #007bff; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px;">Скачать протокол (Excel)</a>
             </div>
+            <hr>
             
-            {% if existing_result %}
-                <div style="background-color: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-                    <strong>Текущий лучший результат:</strong> {{ existing_result.final_result|default:"Нет" }} м
+            <!-- Форма 2: Для выбора спортсмена и сохранения -->
+            <form method="GET" action="">
+                {% csrf_token %}
+                <!-- Скрытые поля, которые передаются всегда -->
+                <input type="hidden" name="event_id" value="{{ current_event.id }}">
+                <input type="hidden" name="event" value="{{ current_event.id }}">
+
+                <label>Выберите участника:</label>
+                <select name="athlete_id" required onchange="this.form.submit()" style="width: 100%; padding: 8px; margin-bottom: 20px;">
+                    <option value="">--- Выберите спортсмена ---</option>
+                    {% for a in athletes %}
+                        <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
+                            {{ a.full_name }} ({{ a.birth_date|date:"Y" }})
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label>Попытки (1-6):</label>
+                <div class="attempts">
+                    {% for i in "123456" %}
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <input type="text" name="attempt_{{ i }}" placeholder="Рез-т {{ i }}"
+                            {% if existing_result %}
+                                {% if i == '1' %}value="{{ existing_result.attempt_1|default_if_none:'' }}"
+                                {% elif i == '2' %}value="{{ existing_result.attempt_2|default_if_none:'' }}"
+                                {% elif i == '3' %}value="{{ existing_result.attempt_3|default_if_none:'' }}"
+                                {% elif i == '4' %}value="{{ existing_result.attempt_4|default_if_none:'' }}"
+                                {% elif i == '5' %}value="{{ existing_result.attempt_5|default_if_none:'' }}"
+                                {% elif i == '6' %}value="{{ existing_result.attempt_6|default_if_none:'' }}"
+                                {% endif %}
+                            {% endif %}
+                        >
+                        <input type="text" name="wind_{{ i }}" placeholder="Ветер {{ i }}">
+                    </div>
+                    {% endfor %}
                 </div>
-            {% endif %}
+                
+                {% if existing_result %}
+                    <div style="background-color: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                        <strong>Текущий лучший результат:</strong> {{ existing_result.final_result|default:"Нет" }} м
+                    </div>
+                {% endif %}
+                
                 <br>
-                <button type="submit">Сохранить результат</button>
+                <!-- Вот здесь магия: formmethod="post" заставит кнопку отправить данные через POST, не ломая GET-выбор -->
+                <button type="submit" formmethod="post">Сохранить результат</button>
             </form>
         {% endif %}
     </div>
