@@ -91,7 +91,6 @@ import openpyxl
 from django.http import HttpResponse
 
 def export_excel(request, event_id):
-    # Берем вид и его результаты
     event = Event.objects.get(id=event_id)
     results = Result.objects.filter(event=event).order_by('-final_result') # Сортируем по убыванию (для прыжков)
     
@@ -99,7 +98,6 @@ def export_excel(request, event_id):
     ws = wb.active
     ws.title = event.name
     
-    # Заголовки
     ws.append(["Место", "ФИО", "Год рождения", "Организация", "Попытка 1", "Попытка 2", "Попытка 3", "Попытка 4", "Попытка 5", "Попытка 6", "Лучший результат"])
     
     for index, res in enumerate(results, start=1):
@@ -119,5 +117,44 @@ def export_excel(request, event_id):
         
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="{event.name}.xlsx"'
+    wb.save(response)
+    return response
+from django.http import HttpResponse
+from .long_jump import export_long_jump_protocol
+from .models import Result
+
+def export_long_jump(request, event_id):
+    results = Result.objects.filter(event_id=event_id, discipline="длина").select_related("athlete")
+    
+    athletes_data = []
+    for r in results:
+        athletes_data.append({
+            "num": r.athlete.number,
+            "order": r.order,
+            "name": r.athlete.full_name,
+            "birth": r.athlete.birth_date,
+            "rank": r.athlete.rank,
+            "region": r.athlete.region,
+            "org": r.athlete.organization,
+            "attempts": [r.a1, r.a2, r.a3, r.a4, r.a5, r.a6],
+            "winds": [r.w1, r.w2, r.w3, r.w4, r.w5, r.w6], # Ветер
+            "result": r.best_result,
+            "coaches": r.athlete.coaches,
+        })
+
+    event_info = {
+        "title": "Открытый чемпионат и первенства города Абакана по лёгкой атлетике",
+        "venue": "Легкоатлетический манеж МАУ 'СК им. Н.Г. Булакина', ул. Катанова, д. 10",
+        "date": "07-08.2026",
+        "time": "10:00",
+        "stage": "финальные соревнования",
+        "gender": "МУЖЧИНЫ",
+        "discipline": "Прыжок в длину",
+    }
+
+    wb = export_long_jump_protocol(athletes_data, event_info)
+
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = 'attachment; filename="protocol_dlina.xlsx"'
     wb.save(response)
     return response
