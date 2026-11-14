@@ -55,17 +55,15 @@ def judge_input(request):
         
         valid_attempts = [a for a in attempts if a > 0]
         best_result = max(valid_attempts) if valid_attempts else 0.0
-        is_record = request.POST.get('is_record') == 'on'
         
-        # УБРАНЫ ПОЛЯ ВЕТРА, ЧТОБЫ НЕ БЫЛО ОШИБКИ БАЗЫ ДАННЫХ
+        # Убрали 'is_record' и 'wind', чтобы не было ошибки базы данных
         Result.objects.update_or_create(
             event_id=event_id,
             athlete_id=athlete_id,
             defaults={
                 'attempt_1': attempts[0], 'attempt_2': attempts[1], 'attempt_3': attempts[2],
                 'attempt_4': attempts[3], 'attempt_5': attempts[4], 'attempt_6': attempts[5],
-                'final_result': best_result,
-                'is_record': is_record
+                'final_result': best_result
             }
         )
         messages.success(request, 'Результат сохранен!')
@@ -173,7 +171,6 @@ def export_long_jump(request, event_id):
             "region": getattr(r.athlete, 'region', ''),
             "org": getattr(r.athlete, 'organization', ''),
             "attempts": [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6],
-            # ТУТ ТОЖЕ УБРАЛИ ВЕТЕР (ставим пустоту, чтобы Excel не падал)
             "winds": [None, None, None, None, None, None], 
             "result": r.final_result, 
             "coaches": getattr(r.athlete, 'coach', ''), 
