@@ -5,18 +5,22 @@
     <title>Ввод результатов судьи</title>
     <style>
         body { font-family: Arial; padding: 20px; background: #f4f4f4; }
-        .card { background: white; padding: 20px; border-radius: 8px; max-width: 800px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        select, input[type="text"] { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        .card { background: white; padding: 20px; border-radius: 8px; max-width: 850px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        select, input[type="text"] { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
         button { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
         button:hover { background: #218838; }
-        .attempts { display: flex; gap: 10px; margin-bottom: 15px; }
-        .attempts input { width: 70px; text-align: center; }
-        label { font-weight: bold; display: block; margin-top: 10px; }
+        .attempts { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .attempts input { width: 75px; text-align: center; }
+        label { font-weight: bold; display: block; margin-top: 15px; }
         .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
         
         .btn-download { display: inline-block; padding: 8px 15px; text-decoration: none; border-radius: 5px; color: white; font-size: 14px; margin-left: 10px; }
         .btn-m { background-color: #007bff; }
         .btn-ж { background-color: #dc3545; }
+        
+        /* Стили для таймера */
+        .timer-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 5px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .timer-box button { background: #ffc107; color: black; padding: 5px 15px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -41,7 +45,7 @@
         </form>
 
         {% if current_event %}
-            <!-- Блок со ссылками на скачивание (Кнопки встроены сюда) -->
+            <!-- Блок со ссылками на скачивание -->
             <div style="text-align: right; margin-top: 15px; margin-bottom: 10px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
                 <strong>Скачать протокол:</strong>
                 <a href="{% url 'export_long_jump' current_event.id %}?discipline={{ current_event.name|lower }}&gender=м" class="btn-download btn-m">Мужчины</a>
@@ -49,14 +53,13 @@
             </div>
             <hr>
             
-            <!-- Форма 2: Сохранение результатов (Теперь строго POST) -->
+            <!-- Форма 2: Сохранение результатов -->
             <form method="POST" id="resultForm">
                 {% csrf_token %}
                 <input type="hidden" name="event_id" value="{{ current_event.id }}">
                 
-                <!-- При выборе участника мы НЕ отправляем POST, а меняем URL страницы (GET) -->
                 <label>Выберите участника:</label>
-                <select name="athlete_id" required onchange="changeAthlete(this.value)" style="width: 100%; padding: 8px; margin-bottom: 20px;">
+                <select name="athlete_id" required onchange="changeAthlete(this.value)" style="margin-bottom: 20px;">
                     <option value="">--- Выберите спортсмена ---</option>
                     {% for a in athletes %}
                         <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
@@ -65,7 +68,14 @@
                     {% endfor %}
                 </select>
 
-                <label>Попытки (1-6) и Ветер:</label>
+                <!-- Таймер попытки -->
+                <div class="timer-box">
+                    <span><strong>Время на попытку:</strong></span>
+                    <span id="timer" style="font-size: 24px; font-weight: bold; color: #856404;">01:00</span>
+                    <button type="button" onclick="startTimer()">Старт</button>
+                </div>
+
+                <label>Попытки (1-6) и Ветер <span style="font-weight: normal; color: #666; font-size: 13px;">(неудачная попытка - введите X)</span>:</label>
                 <div class="attempts">
                     {% for i in "123456" %}
                     <div style="display: flex; flex-direction: column; gap: 5px;">
@@ -96,6 +106,14 @@
                     </div>
                     {% endfor %}
                 </div>
+
+                <!-- Галочка рекорда -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: inline-block; font-weight: normal; cursor: pointer; margin-top: 0;">
+                        <input type="checkbox" name="is_record" {% if existing_result and existing_result.is_record %}checked{% endif %}> 
+                        <strong>Установлен рекорд</strong> (будет отмечено звездочкой в протоколе)
+                    </label>
+                </div>
                 
                 {% if existing_result %}
                     <div style="background-color: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
@@ -103,20 +121,41 @@
                     </div>
                 {% endif %}
                 
-                <br>
                 <button type="submit">Сохранить результат</button>
             </form>
         {% endif %}
     </div>
 
-    <!-- Скрипт для подгрузки данных спортсмена без сброса формы -->
+    <!-- Скрипты -->
     <script>
+        // Скрипт для подгрузки данных спортсмена
         function changeAthlete(athleteId) {
             const eventId = "{{ current_event.id }}";
             if (athleteId) {
-                // Меняем URL страницы, чтобы сервер подгрузил данные этого спортсмена (GET-запрос)
                 window.location.href = `/judge/?event=${eventId}&athlete_id=${athleteId}`;
             }
+        }
+
+        // Скрипт для таймера
+        let timerInterval;
+        function startTimer() {
+            clearInterval(timerInterval);
+            let timeLeft = 60;
+            const timerEl = document.getElementById('timer');
+            timerEl.style.color = '#856404';
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                const s = (timeLeft % 60).toString().padStart(2, '0');
+                timerEl.innerText = `${m}:${s}`;
+                
+                if (timeLeft <= 10) timerEl.style.color = 'red';
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerEl.innerText = "ВРЕМЯ!";
+                }
+            }, 1000);
         }
     </script>
 </body>
