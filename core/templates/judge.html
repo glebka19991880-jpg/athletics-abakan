@@ -54,19 +54,20 @@
             <hr>
             
             <!-- Форма 2: Сохранение результатов -->
-            <form method="POST" id="resultForm">
+            <!-- ВАЖНО: Мы используем GET для выбора спортсмена, поэтому onchange вызывает JS-функцию -->
+            <form method="POST" id="resultForm" action="">
                 {% csrf_token %}
                 <input type="hidden" name="event_id" value="{{ current_event.id }}">
                 
-                           <label>Выберите участника:</label>
-            <select name="athlete_id" required onchange="this.form.submit()" style="width: 100%; padding: 8px; margin-bottom: 20px;">
-                <option value="">--- Выберите спортсмена ---</option>
-                {% for a in athletes %}
-                    <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
-                        {{ a.full_name|default:a }}
-                    </option>
-                {% endfor %}
-            </select>
+                <label>Выберите участника:</label>
+                <select name="athlete_id" required onchange="changeAthlete(this.value)" style="width: 100%; padding: 8px; margin-bottom: 20px;">
+                    <option value="">--- Выберите спортсмена ---</option>
+                    {% for a in athletes %}
+                        <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
+                            {{ a.full_name|default:a }}
+                        </option>
+                    {% endfor %}
+                </select>
 
                 <!-- Таймер попытки -->
                 <div class="timer-box">
@@ -128,10 +129,11 @@
 
     <!-- Скрипты -->
     <script>
-        // Скрипт для подгрузки данных спортсмена
+        // Скрипт для подгрузки данных спортсмена (вызывается при выборе из списка)
         function changeAthlete(athleteId) {
             const eventId = "{{ current_event.id }}";
             if (athleteId) {
+                // Делаем GET-запрос, чтобы подтянуть старые результаты
                 window.location.href = `/judge/?event=${eventId}&athlete_id=${athleteId}`;
             }
         }
