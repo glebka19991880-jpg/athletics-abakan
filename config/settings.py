@@ -13,15 +13,10 @@ import dj_database_url
 
 import dj_database_url
 
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'railway',
-        'USER': 'postgres',
-        'PASSWORD': 'xkrYKUvRVtVAkoxkHKJdqqeolypPmwkgD', # Ваш пароль со скриншота
-        'HOST': 'postgres-z0ui.railway.internal',          # Ваш хост со скриншота
-        'PORT': '5432',
-    }
+    'default': dj_database_url.parse('postgresql://postgres:xkrYKUvRVtvAkoxKHKJdqneoLyPnwKgD@postgres-z0ui.railway.internal:5432/railway')
 }
 INSTALLED_APPS = [
     'django.contrib.admin',
