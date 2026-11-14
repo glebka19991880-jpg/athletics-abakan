@@ -16,8 +16,6 @@ class Athlete(models.Model):
     region = models.CharField("Регион", max_length=100, blank=True)
     organization = models.CharField("Организация", max_length=200, blank=True)
     coach = models.CharField("Тренер", max_length=200, blank=True)
-    # ДОБАВЛЕНО: Нагрудный номер (для протокола)
-    number = models.IntegerField("Нагрудный номер", null=True, blank=True)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="athletes", null=True, blank=True)
 
     def __str__(self):
@@ -37,7 +35,6 @@ class Result(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="results")
     athlete = models.ForeignKey(Athlete, on_delete=models.CASCADE)
     
-    # ИСПРАВЛЕНО: FloatField вместо CharField, чтобы можно было передавать числа и None
     attempt_1 = models.FloatField("Попытка 1", null=True, blank=True)
     attempt_2 = models.FloatField("Попытка 2", null=True, blank=True)
     attempt_3 = models.FloatField("Попытка 3", null=True, blank=True)
@@ -45,7 +42,6 @@ class Result(models.Model):
     attempt_5 = models.FloatField("Попытка 5", null=True, blank=True)
     attempt_6 = models.FloatField("Попытка 6", null=True, blank=True)
     
-    # ДОБАВЛЕНО: Поля для ветра
     wind_1 = models.FloatField("Ветер 1", null=True, blank=True)
     wind_2 = models.FloatField("Ветер 2", null=True, blank=True)
     wind_3 = models.FloatField("Ветер 3", null=True, blank=True)
@@ -53,12 +49,8 @@ class Result(models.Model):
     wind_5 = models.FloatField("Ветер 5", null=True, blank=True)
     wind_6 = models.FloatField("Ветер 6", null=True, blank=True)
     
-    # ИСПРАВЛЕНО: Итоговый результат тоже FloatField
     final_result = models.FloatField("Итоговый результат", null=True, blank=True)
-    
-    # ДОБАВЛЕНО: Флаг установления рекорда
     is_record = models.BooleanField("Рекорд", default=False)
-    
     place = models.IntegerField("Место", null=True, blank=True)
     assigned_rank = models.CharField("Присвоенный разряд", max_length=20, blank=True)
 
