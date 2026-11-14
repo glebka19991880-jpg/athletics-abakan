@@ -13,6 +13,10 @@
         .attempts input { width: 70px; text-align: center; }
         label { font-weight: bold; display: block; margin-top: 10px; }
         .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+        
+        .btn-download { display: inline-block; padding: 8px 15px; text-decoration: none; border-radius: 5px; color: white; font-size: 14px; margin-left: 10px; }
+        .btn-m { background-color: #007bff; }
+        .btn-ж { background-color: #dc3545; }
     </style>
 </head>
 <body>
@@ -25,7 +29,7 @@
             {% endfor %}
         {% endif %}
 
-        <!-- Форма 1: Только для выбора соревнования (GET) -->
+        <!-- Форма 1: Выбор соревнования -->
         <form method="get">
             <label>Выберите вид:</label>
             <select name="event" onchange="this.form.submit()">
@@ -37,20 +41,22 @@
         </form>
 
         {% if current_event %}
-            <div style="text-align: right; margin-top: 15px; margin-bottom: 10px;">
-                <a href="{% url 'export_long_jump' current_event.id %}" style="background-color: #007bff; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px;">Скачать протокол (Excel)</a>
+            <!-- Блок со ссылками на скачивание (Кнопки встроены сюда) -->
+            <div style="text-align: right; margin-top: 15px; margin-bottom: 10px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
+                <strong>Скачать протокол:</strong>
+                <a href="{% url 'export_long_jump' current_event.id %}?discipline={{ current_event.name|lower }}&gender=м" class="btn-download btn-m">Мужчины</a>
+                <a href="{% url 'export_long_jump' current_event.id %}?discipline={{ current_event.name|lower }}&gender=ж" class="btn-download btn-ж">Женщины</a>
             </div>
             <hr>
             
-            <!-- Форма 2: Для выбора спортсмена и сохранения -->
-            <form method="GET" action="">
+            <!-- Форма 2: Сохранение результатов (Теперь строго POST) -->
+            <form method="POST" id="resultForm">
                 {% csrf_token %}
-                <!-- Скрытые поля, которые передаются всегда -->
                 <input type="hidden" name="event_id" value="{{ current_event.id }}">
-                <input type="hidden" name="event" value="{{ current_event.id }}">
-
+                
+                <!-- При выборе участника мы НЕ отправляем POST, а меняем URL страницы (GET) -->
                 <label>Выберите участника:</label>
-                <select name="athlete_id" required onchange="this.form.submit()" style="width: 100%; padding: 8px; margin-bottom: 20px;">
+                <select name="athlete_id" required onchange="changeAthlete(this.value)" style="width: 100%; padding: 8px; margin-bottom: 20px;">
                     <option value="">--- Выберите спортсмена ---</option>
                     {% for a in athletes %}
                         <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
@@ -59,7 +65,7 @@
                     {% endfor %}
                 </select>
 
-                <label>Попытки (1-6):</label>
+                <label>Попытки (1-6) и Ветер:</label>
                 <div class="attempts">
                     {% for i in "123456" %}
                     <div style="display: flex; flex-direction: column; gap: 5px;">
@@ -75,7 +81,7 @@
                                 {% endif %}
                             {% endif %}
                         >
-                        <!-- Поле для ВЕТРА (теперь тоже подтягивает старые значения) -->
+                        <!-- Поле для ВЕТРА -->
                         <input type="text" name="wind_{{ i }}" placeholder="Ветер {{ i }}"
                             {% if existing_result %}
                                 {% if i == '1' %}value="{{ existing_result.wind_1|default_if_none:'' }}"
@@ -98,13 +104,20 @@
                 {% endif %}
                 
                 <br>
-                <!-- Кнопка отправляет данные POST-запросом, не ломая GET-выбор -->
-                <button type="submit" formmethod="post">Сохранить результат</button>
+                <button type="submit">Сохранить результат</button>
             </form>
         {% endif %}
     </div>
+
+    <!-- Скрипт для подгрузки данных спортсмена без сброса формы -->
+    <script>
+        function changeAthlete(athleteId) {
+            const eventId = "{{ current_event.id }}";
+            if (athleteId) {
+                // Меняем URL страницы, чтобы сервер подгрузил данные этого спортсмена (GET-запрос)
+                window.location.href = `/judge/?event=${eventId}&athlete_id=${athleteId}`;
+            }
+        }
+    </script>
 </body>
 </html>
-<a href="{% url 'export_long_jump' current_event.id %}?discipline=длина&gender=м" class="btn btn-primary">Скачать протокол (Мужчины)</a>
-
-<a href="{% url 'export_long_jump' current_event.id %}?discipline=длина&gender=ж" class="btn btn-danger">Скачать протокол (Женщины)</a>
