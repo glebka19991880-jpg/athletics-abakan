@@ -6,7 +6,8 @@ from .models import Athlete, Event, Result, ApiKey
 from .forms import ImportExcelForm
 import openpyxl
 from django.http import HttpResponse
-from .long_jump import export_long_jump_protocol
+# ИСПРАВЛЕНИЕ: Импортируем новую универсальную функцию
+from .long_jump import export_technical_protocol
 
 
 def home(request):
@@ -145,7 +146,21 @@ def export_excel(request, event_id):
     return response
 
 
+# ИСПРАВЛЕНИЕ: Универсальная функция скачивания технического протокола
 def export_long_jump(request, event_id):
+    # Получаем вид и пол из URL (по умолчанию длина и мужчины)
+    discipline = request.GET.get('discipline', 'длина').lower()
+    gender_param = request.GET.get('gender', 'м').lower() # 'м' или 'ж'
+    
+    discipline_titles = {
+        'длина': 'Прыжок в длину',
+        'высота': 'Прыжок в высоту',
+        'тройной': 'Тройной прыжок',
+        'ядро': 'Толкание ядра'
+    }
+    title = discipline_titles.get(discipline, 'Технический вид')
+    gender_title = "ЖЕНЩИНЫ" if gender_param == 'ж' else "МУЖЧИНЫ"
+
     results = Result.objects.filter(event_id=event_id).select_related("athlete")
     
     athletes_data = []
@@ -170,18 +185,19 @@ def export_long_jump(request, event_id):
         "date": "07-08.2026",
         "time": "10:00",
         "stage": "финальные соревнования",
-        "gender": "МУЖЧИНЫ",
-        "discipline": "Прыжок в длину",
-        "rm": ("7.37", "Хайке Дрехслер"),
-        "re": ("7.37", "Хайке Дрехслер"),
-        "rr": ("7.30", "Галина Чистякова"),
+        "gender": gender_title,
+        "discipline": title,
+        "rm": ("", ""), 
+        "re": ("", ""),
+        "rr": ("", ""),
     }
 
-    wb = export_long_jump_protocol(athletes_data, event_info)
+    # Вызываем новую функцию из long_jump.py
+    wb = export_technical_protocol(athletes_data, event_info)
 
     response = HttpResponse(
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-    response["Content-Disposition"] = 'attachment; filename="protocol_dlina.xlsx"'
+    response["Content-Disposition"] = f'attachment; filename="protocol_{discipline}_{gender_param}.xlsx"'
     wb.save(response)
     return response
