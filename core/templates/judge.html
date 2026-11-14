@@ -40,7 +40,7 @@
         <a href="{% url 'export_long_jump' current_event.id %}" style="background-color: #007bff; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px;">Скачать протокол (Excel)</a>
     </div>
             <hr>
-            <form method="post">
+           <form method="GET">
                 {% csrf_token %}
                 <input type="hidden" name="event_id" value="{{ current_event.id }}"><input type="text" name="wind_1" placeholder="Ветер">
                          <label>Выберите участника:</label>
