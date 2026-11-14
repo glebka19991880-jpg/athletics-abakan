@@ -6,7 +6,7 @@ from .models import Athlete, Event, Result, ApiKey
 from .forms import ImportExcelForm
 import openpyxl
 from django.http import HttpResponse
-# ИСПРАВЛЕНО: Импортируем правильное название функции
+# ИСПРАВЛЕНО: Импортируем правильную функцию
 from .long_jump import export_technical_protocol 
 
 
@@ -41,12 +41,10 @@ def judge_input(request):
         event_id = request.POST.get('event_id') or request.POST.get('event')
         athlete_id = request.POST.get('athlete_id')
         
-        # Вспомогательная функция для безопасного перевода текста в число
         def parse_float(val):
             if not val or str(val).strip() == '': 
                 return 0.0
             val = str(val).strip().upper()
-            # Если судья ввел X или прочерк - это неудачная попытка (-1.0)
             if val in ['X', 'Х', '-', 'МИМО', 'НЕУДАЧА']: 
                 return -1.0
             try:
@@ -54,15 +52,11 @@ def judge_input(request):
             except ValueError:
                 return 0.0
 
-        # Сохраняем попытки и ветер
         attempts = [parse_float(request.POST.get(f'attempt_{i}')) for i in range(1, 7)]
         winds = [parse_float(request.POST.get(f'wind_{i}')) for i in range(1, 7)]
         
-        # Считаем лучший результат (игнорируем неудачные попытки -1.0 и нули)
         valid_attempts = [a for a in attempts if a > 0]
         best_result = max(valid_attempts) if valid_attempts else 0.0
-        
-        # Галочка рекорда
         is_record = request.POST.get('is_record') == 'on'
         
         Result.objects.update_or_create(
@@ -203,7 +197,7 @@ def export_long_jump(request, event_id):
         "rr": ("", ""),
     }
 
-    # ИСПРАВЛЕНО: Вызываем export_technical_protocol
+    # ИСПРАВЛЕНО: вызываем export_technical_protocol
     wb = export_technical_protocol(athletes_data, event_info) 
 
     response = HttpResponse(
