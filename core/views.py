@@ -6,7 +6,6 @@ from .models import Athlete, Event, Result, ApiKey
 from .forms import ImportExcelForm
 import openpyxl
 from django.http import HttpResponse
-# ИСПРАВЛЕНИЕ: Импортируем новую универсальную функцию
 from .long_jump import export_technical_protocol
 
 
@@ -41,30 +40,40 @@ def judge_input(request):
         event_id = request.POST.get('event_id') or request.POST.get('event')
         athlete_id = request.POST.get('athlete_id')
         
-        attempts = []
-        for i in range(1, 7):
-            val = request.POST.get(f'attempt_{i}')
-            if val and val.strip() != '':
-                try:
-                    attempts.append(float(val.replace(',', '.')))
-                except ValueError:
-                    pass
+        # Вспомогательная функция для безопасного перевода текста в число
+        def parse_float(val):
+            if not val or val.strip() == '': 
+                return 0.0
+            val = val.strip().upper()
+            # Если судья ввел X или прочерк - это неудачная попытка (-1.0)
+            if val in ['X', 'Х', '-', 'МИМО', 'НЕУДАЧА']: 
+                return -1.0
+            try:
+                return float(val.replace(',', '.'))
+            except ValueError:
+                return 0.0
+
+        # Сохраняем попытки и ветер
+        attempts = [parse_float(request.POST.get(f'attempt_{i}')) for i in range(1, 7)]
+        winds = [parse_float(request.POST.get(f'wind_{i}')) for i in range(1, 7)]
         
-        # Исправление: если попыток нет, ставим 0.0 вместо None
-        best_result = max(attempts) if attempts else 0.0
+        # Считаем лучший результат (игнорируем неудачные попытки -1.0 и нули)
+        valid_attempts = [a for a in attempts if a > 0]
+        best_result = max(valid_attempts) if valid_attempts else 0.0
+        
+        # Галочка рекорда
+        is_record = request.POST.get('is_record') == 'on'
         
         Result.objects.update_or_create(
             event_id=event_id,
             athlete_id=athlete_id,
             defaults={
-                # Исправление: заменяем None на 0.0 для всех полей
-                'attempt_1': request.POST.get('attempt_1') or 0.0,
-                'attempt_2': request.POST.get('attempt_2') or 0.0,
-                'attempt_3': request.POST.get('attempt_3') or 0.0,
-                'attempt_4': request.POST.get('attempt_4') or 0.0,
-                'attempt_5': request.POST.get('attempt_5') or 0.0,
-                'attempt_6': request.POST.get('attempt_6') or 0.0,
-                'final_result': best_result
+                'attempt_1': attempts[0], 'attempt_2': attempts[1], 'attempt_3': attempts[2],
+                'attempt_4': attempts[3], 'attempt_5': attempts[4], 'attempt_6': attempts[5],
+                'wind_1': winds[0], 'wind_2': winds[1], 'wind_3': winds[2],
+                'wind_4': winds[3], 'wind_5': winds[4], 'wind_6': winds[5],
+                'final_result': best_result,
+                'is_record': is_record
             }
         )
         messages.success(request, 'Результат сохранен!')
@@ -146,11 +155,9 @@ def export_excel(request, event_id):
     return response
 
 
-# ИСПРАВЛЕНИЕ: Универсальная функция скачивания технического протокола
 def export_long_jump(request, event_id):
-    # Получаем вид и пол из URL (по умолчанию длина и мужчины)
     discipline = request.GET.get('discipline', 'длина').lower()
-    gender_param = request.GET.get('gender', 'м').lower() # 'м' или 'ж'
+    gender_param = request.GET.get('gender', 'м').lower()
     
     discipline_titles = {
         'длина': 'Прыжок в длину',
@@ -173,9 +180,13 @@ def export_long_jump(request, event_id):
             "rank": getattr(r.athlete, 'rank', ''),
             "region": getattr(r.athlete, 'region', ''),
             "org": getattr(r.athlete, 'organization', ''),
+            # Передаем попытки
             "attempts": [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6],
-            "winds": [None, None, None, None, None, None], 
+            # Передаем ветер из базы данных (а не None, как было раньше)
+            "winds": [r.wind_1, r.wind_2, r.wind_3, r.wind_4, r.wind_5, r.wind_6], 
             "result": r.final_result, 
+            # Передаем галочку рекорда
+            "is_record": r.is_record,
             "coaches": getattr(r.athlete, 'coaches', ''),
         })
 
@@ -192,7 +203,6 @@ def export_long_jump(request, event_id):
         "rr": ("", ""),
     }
 
-    # Вызываем новую функцию из long_jump.py
     wb = export_technical_protocol(athletes_data, event_info)
 
     response = HttpResponse(
