@@ -15,7 +15,7 @@ ALIGN_LEFT = Alignment(horizontal="left", vertical="center", wrap_text=True)
 
 DASH = "—"
 
-# СЛОВАРЬ НОРМАТИВОВ: вид -> пол -> список нормативов (от высокого к низкому)
+# СЛОВАРЬ НОРМАТИВОВ: вид -> пол -> список нормативов
 STANDARDS = {
     "длина": {
         "м": [("МСМК", 7.95), ("МС", 7.60), ("КМС", 6.95), ("I", 6.50), ("II", 6.00), ("III", 5.40), ("Iю", 4.80), ("IIю", 4.20), ("IIIю", 3.60)],
@@ -42,14 +42,13 @@ PLACE_POINTS = {
 DEFAULT_POINTS = 1
 
 def calculate_rank(result_m, discipline_name, gender="м"):
-    if result_m is None or result_m == "" or result_m == 0.0:
+    if result_m is None or result_m == "" or result_m == 0.0 or result_m == -1.0:
         return DASH
     try:
         val = float(result_m)
     except (TypeError, ValueError):
         return DASH
         
-    # Берем нормативы по виду и полу, если нет - по умолчанию (длина, муж)
     discipline_standards = STANDARDS.get(discipline_name.lower(), {}).get(gender.lower(), STANDARDS["длина"]["м"])
     
     for rank_name, norm in discipline_standards:
@@ -58,7 +57,7 @@ def calculate_rank(result_m, discipline_name, gender="м"):
     return "б/р"
 
 def calculate_place(results):
-    valid = [(i, r) for i, r in enumerate(results) if r is not None and r != "" and r != 0.0]
+    valid = [(i, r) for i, r in enumerate(results) if r is not None and r != "" and r != 0.0 and r != -1.0]
     sorted_valid = sorted(valid, key=lambda x: x[1], reverse=True)
     places = [None] * len(results)
     prev_val = None
@@ -91,15 +90,18 @@ def _merge_and_write(ws, cell_range, value, font=FONT_NORMAL, align=ALIGN_CENTER
     _set_borders(ws, cell_range)
 
 def _fmt_num(v):
+    """Форматирование попыток: -1.0 превращается в 'X', 0.0 в прочерк."""
     if v is None or v == "" or v == 0.0:
         return DASH
+    if v == -1.0: # ИСПРАВЛЕНИЕ: Выводим X для неудачной попытки
+        return "X"
     try:
         return f"{float(v):.2f}".replace(".", ",")
     except (TypeError, ValueError):
         return str(v)
 
 def _fmt_wind(w):
-    if w is None or w == "":
+    if w is None or w == "" or w == 0.0:
         return DASH
     try:
         val = float(w)
@@ -188,6 +190,11 @@ def export_technical_protocol(athletes, event_info):
         sorted_place = i + 1 if (result is not None and result != 0.0) else DASH
         points = calculate_points(sorted_place if sorted_place != DASH else None)
 
+        # ИСПРАВЛЕНИЕ: Добавляем звездочку к результату, если это рекорд
+        result_str = _fmt_num(result)
+        if a.get("is_record"):
+            result_str += "*"
+
         row_values = [
             a.get("num", ""), a.get("order", ""), a.get("name", ""),
             str(a.get("birth", "")), a.get("rank", ""), a.get("region", ""),
@@ -199,7 +206,7 @@ def export_technical_protocol(athletes, event_info):
             _fmt_num(attempts[3]), _fmt_wind(winds[3]),
             _fmt_num(attempts[4]), _fmt_wind(winds[4]),
             _fmt_num(attempts[5]), _fmt_wind(winds[5]),
-            _fmt_num(result), "",
+            result_str, "",  # ИСПРАВЛЕНИЕ: Выводим результат со звездочкой
             rank_done, a.get("coaches", ""), points,
         ]
         for col, val in enumerate(row_values, start=1):
