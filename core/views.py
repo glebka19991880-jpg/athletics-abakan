@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Athlete, Event, Result, ApiKey
 from .forms import ImportExcelForm
+from .long_jump import export_long_jump_protocol
+import openpyxl
 
 def home(request):
     return render(request, 'home.html')
@@ -25,13 +27,15 @@ def judge_input(request):
     athletes = []
     current_event = None
     
-    if event_id:
-        current_event = Event.objects.filter(id=event_id).first()
+    # Получаем ID соревнования (из GET запроса при выборе, или из POST при сохранении)
+    active_event_id = request.POST.get('event') or request.POST.get('event_id') or event_id
+
+    if active_event_id:
+        current_event = Event.objects.filter(id=active_event_id).first()
         if current_event:
             athletes = Athlete.objects.filter(competition=current_event.competition).order_by('full_name')
 
     if request.method == "POST":
-        event_id = request.POST.get('event_id') or request.POST.get('event')
         athlete_id = request.POST.get('athlete_id')
         
         attempts = []
@@ -45,8 +49,9 @@ def judge_input(request):
         
         best_result = max(attempts) if attempts else None
         
-        Result.objects.update_or_create(
-            event_id=event_id,
+        # Сохраняем результаты
+        result_obj, created = Result.objects.update_or_create(
+            event_id=active_event_id,
             athlete_id=athlete_id,
             defaults={
                 'attempt_1': request.POST.get('attempt_1') or None,
@@ -58,15 +63,28 @@ def judge_input(request):
                 'final_result': best_result
             }
         )
+        
+        # Безопасное сохранение ветра (если поля wind_1...wind_6 есть в модели Result)
+        try:
+            for i in range(1, 7):
+                w_val = request.POST.get(f'wind_{i}')
+                if w_val:
+                    setattr(result_obj, f'wind_{i}', float(w_val.replace(',', '.')))
+                else:
+                    setattr(result_obj, f'wind_{i}', None)
+            result_obj.save()
+        except Exception:
+            pass # Если полей в БД нет, просто пропускаем этот шаг
+
         messages.success(request, 'Результат сохранен!')
-        return redirect(f'/judge/?event={event_id}&athlete_id={athlete_id}')
+        return redirect(f'/judge/?event={active_event_id}&athlete_id={athlete_id}')
 
     selected_athlete_id = request.GET.get('athlete_id')
     existing_result = None
     
-    if event_id and selected_athlete_id:
+    if active_event_id and selected_athlete_id:
         existing_result = Result.objects.filter(
-            event_id=event_id, 
+            event_id=active_event_id, 
             athlete_id=selected_athlete_id
         ).first()
 
@@ -75,9 +93,10 @@ def judge_input(request):
         'athletes': athletes,
         'current_event': current_event,
         'selected_athlete_id': int(selected_athlete_id) if selected_athlete_id else None,
-        'existing_result': existing_result, # Передаем в HTML для автозаполнения
+        'existing_result': existing_result,
     }
     return render(request, 'judge.html', context)
+
 @csrf_exempt
 def input_result(request):
     if request.method == "POST":
@@ -102,8 +121,6 @@ def input_result(request):
         return JsonResponse({"status": "ok", "id": result.id})
     
     return JsonResponse({"error": "Метод не разрешен"}, status=405)
-import openpyxl
-from django.http import HttpResponse
 
 def export_excel(request, event_id):
     event = Event.objects.get(id=event_id)
@@ -134,26 +151,29 @@ def export_excel(request, event_id):
     response['Content-Disposition'] = f'attachment; filename="{event.name}.xlsx"'
     wb.save(response)
     return response
-from django.http import HttpResponse
-from .long_jump import export_long_jump_protocol
-from .models import Result
 
 def export_long_jump(request, event_id):
+    # Берем все результаты для этого соревнования
     results = Result.objects.filter(event_id=event_id).select_related("athlete")
     
     athletes_data = []
     for r in results:
+        # Извлекаем ветер, если поля есть в БД, иначе ставим None
+        winds = []
+        for i in range(1, 7):
+            winds.append(getattr(r, f'wind_{i}', None))
+
         athletes_data.append({
-            "num": getattr(r.athlete, 'number', r.athlete.id),
+            "num": getattr(r.athlete, 'number', r.athlete.id), # Если есть поле "number", используется оно
             "order": r.id,
-            "name": str(r.athlete), # Или r.athlete.full_name
+            "name": str(r.athlete), 
             "birth": getattr(r.athlete, 'birth_date', ''),
             "rank": getattr(r.athlete, 'rank', ''),
             "region": getattr(r.athlete, 'region', ''),
             "org": getattr(r.athlete, 'organization', ''),
             "attempts": [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6],
-            "winds": [None, None, None, None, None, None], 
-            "result": r.final_result, # Итоговый результат из БД
+            "winds": winds, 
+            "result": r.final_result, 
             "coaches": getattr(r.athlete, 'coaches', ''),
         })
 
