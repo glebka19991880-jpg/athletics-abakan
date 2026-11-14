@@ -26,43 +26,58 @@ def judge_input(request):
     current_event = None
     
     if event_id:
-        current_event = Event.objects.get(id=event_id)
-        athletes = Athlete.objects.filter(competition=current_event.competition).order_by('full_name')
+        current_event = Event.objects.filter(id=event_id).first()
+        if current_event:
+            athletes = Athlete.objects.filter(competition=current_event.competition).order_by('full_name')
 
     if request.method == "POST":
-        event_id = request.POST.get('event_id')
+        event_id = request.POST.get('event_id') or request.POST.get('event')
         athlete_id = request.POST.get('athlete_id')
         
         attempts = []
         for i in range(1, 7):
             val = request.POST.get(f'attempt_{i}')
-            if val:
-                attempts.append(val)
+            if val and val.strip() != '':
+                try:
+                    attempts.append(float(val.replace(',', '.')))
+                except ValueError:
+                    pass
         
-        best_result = max(attempts) if attempts else ""
-
+        best_result = max(attempts) if attempts else None
+        
         Result.objects.update_or_create(
             event_id=event_id,
             athlete_id=athlete_id,
             defaults={
-                'attempt_1': request.POST.get('attempt_1', ''),
-                'attempt_2': request.POST.get('attempt_2', ''),
-                'attempt_3': request.POST.get('attempt_3', ''),
-                'attempt_4': request.POST.get('attempt_4', ''),
-                'attempt_5': request.POST.get('attempt_5', ''),
-                'attempt_6': request.POST.get('attempt_6', ''),
+                'attempt_1': request.POST.get('attempt_1') or None,
+                'attempt_2': request.POST.get('attempt_2') or None,
+                'attempt_3': request.POST.get('attempt_3') or None,
+                'attempt_4': request.POST.get('attempt_4') or None,
+                'attempt_5': request.POST.get('attempt_5') or None,
+                'attempt_6': request.POST.get('attempt_6') or None,
                 'final_result': best_result
             }
         )
-        messages.success(request, "Результат сохранен!")
-        return redirect(f'/judge/?event={event_id}')
+        messages.success(request, 'Результат сохранен!')
+        return redirect(f'/judge/?event={event_id}&athlete_id={athlete_id}')
 
-    return render(request, 'judge.html', {
+    selected_athlete_id = request.GET.get('athlete_id')
+    existing_result = None
+    
+    if event_id and selected_athlete_id:
+        existing_result = Result.objects.filter(
+            event_id=event_id, 
+            athlete_id=selected_athlete_id
+        ).first()
+
+    context = {
         'events': events,
         'athletes': athletes,
         'current_event': current_event,
-    })
-
+        'selected_athlete_id': int(selected_athlete_id) if selected_athlete_id else None,
+        'existing_result': existing_result, # Передаем в HTML для автозаполнения
+    }
+    return render(request, 'judge.html', context)
 @csrf_exempt
 def input_result(request):
     if request.method == "POST":
