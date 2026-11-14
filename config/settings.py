@@ -4,13 +4,13 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-for-dev')
+SECRET_KEY = 'django-insecure-abakan-2026'
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 DATABASES = {
-        'default': dj_database_url.config(
-default='postgresql://postgres:xkrYKUvRVtVAkoxkHKJdqqeolypPmwkgD@postgres-z0ui.railway.internal:5432/railway'
+    'default': dj_database_url.config(
+        default='postgresql://postgres:xkrYKUvRVtVAkoxkHKJdqqeolypPmwkgD@postgres-z0ui.railway.internal:5432/railway'
     )
 }
 
@@ -56,7 +56,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 AUTH_PASSWORD_VALIDATORS = []
-
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Asia/Krasnoyarsk'
 USE_I18N = True
