@@ -170,24 +170,20 @@ def export_long_jump(request, event_id):
 
     results = Result.objects.filter(event_id=event_id).select_related("athlete")
     
-    athletes_data = []
+       athletes_data = []
     for r in results:
         athletes_data.append({
-            "num": getattr(r.athlete, 'number', r.athlete.id),
+            "num": r.id, # Используем ID вместо номера, так как поля number нет
             "order": r.id,
-            "name": str(r.athlete),
+            "name": str(r.athlete), 
             "birth": getattr(r.athlete, 'birth_date', ''),
             "rank": getattr(r.athlete, 'rank', ''),
             "region": getattr(r.athlete, 'region', ''),
             "org": getattr(r.athlete, 'organization', ''),
-            # Передаем попытки
             "attempts": [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6],
-            # Передаем ветер из базы данных (а не None, как было раньше)
-            "winds": [r.wind_1, r.wind_2, r.wind_3, r.wind_4, r.wind_5, r.wind_6], 
+            "winds": [None, None, None, None, None, None], 
             "result": r.final_result, 
-            # Передаем галочку рекорда
-            "is_record": r.is_record,
-            "coaches": getattr(r.athlete, 'coaches', ''),
+            "coaches": getattr(r.athlete, 'coach', ''), # ТУТ БЫЛО coaches, СТАЛО coach
         })
 
     event_info = {
