@@ -5,3 +5,11 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('upload/', views.upload_excel, name='upload_excel'),
 ]
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('upload/', views.upload_excel, name='upload_excel'),
+    path('judge/', views.judge_input, name='judge_input'), # Вот эта строчка
+]
