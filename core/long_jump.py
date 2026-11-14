@@ -105,7 +105,10 @@ def export_long_jump_protocol(athletes, event_info):
     headers = ["№ уч.", "№п/п", "Фамилия Имя", "Дата рождения", "Заявл. разряд", "Регион, МО", "Ведомственная принадлежность Организация", "Рез-т квал.", "1", "Ветер", "2", "Ветер", "3", "Ветер", "Ж", "4", "Ветер", "5", "Ветер", "6", "Ветер", "Результат", "", "Выполн. разряд", "тренеры", "Очки и Бонус"]
     for idx, h in enumerate(headers, start=1):
         cell = ws.cell(row=12, column=idx, value=h); cell.font = FONT_SMALL; cell.alignment = ALIGN_CENTER; cell.border = BORDER
+    athletes.sort(key=lambda x: x.get("result") if x.get("result") is not None else -1, reverse=True)
 
+    start_row = 13
+    for i, a in enumerate(athletes):
     start_row = 13
     for i, a in enumerate(athletes):
         r = start_row + i
