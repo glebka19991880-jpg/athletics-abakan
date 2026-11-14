@@ -13,3 +13,4 @@ urlpatterns = [
     path('upload/', views.upload_excel, name='upload_excel'),
     path('judge/', views.judge_input, name='judge_input'), # Вот эта строчка
 ]
+path('export/<int:event_id>/', views.export_excel, name='export_excel'),
