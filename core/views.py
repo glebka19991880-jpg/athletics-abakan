@@ -92,7 +92,7 @@ from django.http import HttpResponse
 
 def export_excel(request, event_id):
     event = Event.objects.get(id=event_id)
-    results = Result.objects.filter(event=event).order_by('-final_result') # Сортируем по убыванию (для прыжков)
+    results = Result.objects.filter(event=event).order_by('-final_result')
     
     wb = openpyxl.Workbook()
     ws = wb.active
@@ -124,37 +124,42 @@ from .long_jump import export_long_jump_protocol
 from .models import Result
 
 def export_long_jump(request, event_id):
-    results = Result.objects.filter(event_id=event_id, discipline="длина").select_related("athlete")
+    results = Result.objects.filter(event_id=event_id).select_related("athlete")
     
     athletes_data = []
     for r in results:
         athletes_data.append({
-            "num": r.athlete.number,
-            "order": r.order,
-            "name": r.athlete.full_name,
-            "birth": r.athlete.birth_date,
-            "rank": r.athlete.rank,
-            "region": r.athlete.region,
-            "org": r.athlete.organization,
-            "attempts": [r.a1, r.a2, r.a3, r.a4, r.a5, r.a6],
-            "winds": [r.w1, r.w2, r.w3, r.w4, r.w5, r.w6], # Ветер
-            "result": r.best_result,
-            "coaches": r.athlete.coaches,
+            "num": getattr(r.athlete, 'number', r.athlete.id),
+            "order": r.id,
+            "name": str(r.athlete), # Или r.athlete.full_name
+            "birth": getattr(r.athlete, 'birth_date', ''),
+            "rank": getattr(r.athlete, 'rank', ''),
+            "region": getattr(r.athlete, 'region', ''),
+            "org": getattr(r.athlete, 'organization', ''),
+            "attempts": [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6],
+            "winds": [None, None, None, None, None, None], 
+            "result": r.final_result, # Итоговый результат из БД
+            "coaches": getattr(r.athlete, 'coaches', ''),
         })
 
     event_info = {
         "title": "Открытый чемпионат и первенства города Абакана по лёгкой атлетике",
-        "venue": "Легкоатлетический манеж МАУ 'СК им. Н.Г. Булакина', ул. Катанова, д. 10",
+        "venue": "Легкоатлетический манеж МАУ 'СК им. Н.Г. Булакина', ул. Катанова, д. 10, стр. 1",
         "date": "07-08.2026",
         "time": "10:00",
         "stage": "финальные соревнования",
         "gender": "МУЖЧИНЫ",
         "discipline": "Прыжок в длину",
+        "rm": ("7.37", "Хайке Дрехслер"),
+        "re": ("7.37", "Хайке Дрехслер"),
+        "rr": ("7.30", "Галина Чистякова"),
     }
 
     wb = export_long_jump_protocol(athletes_data, event_info)
 
-    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
     response["Content-Disposition"] = 'attachment; filename="protocol_dlina.xlsx"'
     wb.save(response)
     return response
