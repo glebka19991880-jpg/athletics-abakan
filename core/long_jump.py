@@ -92,7 +92,7 @@ def _fmt_num(v):
     """Форматирование попыток: -1.0 превращается в 'X', 0.0 в прочерк."""
     if v is None or v == "" or v == 0.0:
         return DASH
-    if v == -1.0: # ИСПРАВЛЕНИЕ: Выводим X для неудачной попытки
+    if v == -1.0:
         return "X"
     try:
         return f"{float(v):.2f}".replace(".", ",")
@@ -153,8 +153,13 @@ def export_technical_protocol(athletes, event_info):
     _merge_and_write(ws, "S9:U9", "Время", FONT_SMALL)
     _merge_and_write(ws, "V9:X9", str(event_info.get("time", "")), FONT_SMALL)
 
+    # --- РАСЧЕТ МЕСТ ДО СОРТИРОВКИ ---
     results = [a.get("result") for a in athletes]
     places = calculate_place(results)
+    
+    # Сохраняем посчитанное место внутрь данных каждого спортсмена
+    for idx, a in enumerate(athletes):
+        a["place"] = places[idx]
     
     discipline_name = event_info.get("discipline", "длина").lower()
     gender_str = event_info.get("gender", "МУЖЧИНЫ").lower()
@@ -173,7 +178,7 @@ def export_technical_protocol(athletes, event_info):
         cell.alignment = ALIGN_CENTER
         cell.border = BORDER
 
-    # Сортируем
+    # --- СОРТИРОВКА ДЛЯ ВЫВОДА ---
     athletes.sort(key=lambda x: x.get("result") if x.get("result") is not None else -1, reverse=True)
 
     start_row = 13
@@ -186,10 +191,11 @@ def export_technical_protocol(athletes, event_info):
         # Считаем разряд с учетом пола
         rank_done = calculate_rank(result, discipline_name, gender_key)
         
-        sorted_place = i + 1 if (result is not None and result != 0.0) else DASH
-        points = calculate_points(sorted_place if sorted_place != DASH else None)
+        # Берем место, которое посчитали ранее, а не индекс строки
+        place = a.get("place")
+        points = calculate_points(place)
 
-        # ИСПРАВЛЕНИЕ: Добавляем звездочку к результату, если это рекорд
+        # Добавляем звездочку к результату, если это рекорд
         result_str = _fmt_num(result)
         if a.get("is_record"):
             result_str += "*"
@@ -205,7 +211,7 @@ def export_technical_protocol(athletes, event_info):
             _fmt_num(attempts[3]), _fmt_wind(winds[3]),
             _fmt_num(attempts[4]), _fmt_wind(winds[4]),
             _fmt_num(attempts[5]), _fmt_wind(winds[5]),
-            result_str, "",  # ИСПРАВЛЕНИЕ: Выводим результат со звездочкой
+            result_str, "",
             rank_done, a.get("coaches", ""), points,
         ]
         for col, val in enumerate(row_values, start=1):
