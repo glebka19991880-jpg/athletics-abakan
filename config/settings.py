@@ -9,7 +9,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 DATABASES = {
-    'default': dj_database_url.config(
+    default': dj_database_url.config(
         default='postgresql://postgres:xkrYKUvRVtVAkoxkHKJdqqeolypPmwkgD@postgres-z0ui.railway.internal:5432/railway'
     )
 }
