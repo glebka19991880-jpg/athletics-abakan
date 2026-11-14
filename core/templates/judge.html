@@ -45,7 +45,15 @@
                 <input type="hidden" name="event_id" value="{{ current_event.id }}"><input type="text" name="wind_1" placeholder="Ветер">
                 
                 <label>Выберите участника:</label>
-                <select name="athlete_id" required>
+                <select name="athlete_id" required onchange="this.form.submit()">
+    <option value="">--- Выберите спортсмена ---</option>
+    {% for a in athletes %}
+        <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
+            {{ a.full_name }} ({{ a.birth_date|date:"Y" }})
+        </option>
+    {% endfor %}
+</select>
+<input type="hidden" name="event" value="{{ current_event.id }}">
                     <option value="">--- Выберите спортсмена ---</option>
                     {% for a in athletes %}
                         <option value="{{ a.id }}">{{ a.full_name }} ({{ a.birth_date|date:"Y" }})</option>
