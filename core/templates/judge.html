@@ -105,3 +105,6 @@
     </div>
 </body>
 </html>
+<a href="{% url 'export_long_jump' current_event.id %}?discipline=длина&gender=м" class="btn btn-primary">Скачать протокол (Мужчины)</a>
+
+<a href="{% url 'export_long_jump' current_event.id %}?discipline=длина&gender=ж" class="btn btn-danger">Скачать протокол (Женщины)</a>
