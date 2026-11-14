@@ -1,4 +1,3 @@
-# core/long_jump.py
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side
 from datetime import date
