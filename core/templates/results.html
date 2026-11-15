@@ -1,36 +1,211 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Онлайн-результаты соревнований по легкой атлетике города Абакана.">
+    <meta name="description" content="Онлайн-результаты соревнований по легкой атлетике города Абакана. Смотрите места, попытки и лучшие результаты спортсменов.">
+    <meta name="keywords" content="легкая атлетика, Абакан, результаты соревнований, протоколы, спорт">
     <title>Результаты соревнований | Легкая атлетика Абакан</title>
+    
+    <!-- Подключаем современный шрифт Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        h1 { text-align: center; color: #1a365d; margin-bottom: 30px; }
-        .filter-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color); 
+            margin: 0; 
+            padding: 20px; 
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .container { max-width: 1100px; margin: 0 auto; }
+        
+        h1 { 
+            text-align: center; 
+            color: var(--text-main); 
+            font-weight: 700;
+            margin-bottom: 30px; 
+            font-size: 28px;
+            letter-spacing: -0.5px;
+        }
+        
+        /* Фильтры */
+        .filter-box { 
+            background: var(--card-bg); 
+            padding: 20px; 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: flex; 
+            justify-content: center; 
+            gap: 20px; 
+            flex-wrap: wrap; 
+            border: 1px solid var(--border-color);
+        }
         .filter-group { display: flex; flex-direction: column; align-items: flex-start; }
-        .filter-group label { font-size: 14px; color: #4a5568; margin-bottom: 5px; font-weight: bold; }
-        .filter-box select { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; min-width: 150px; }
-        .filter-box button { padding: 8px 15px; background: #3182ce; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; height: 42px; margin-top: auto; }
-        .filter-box a { text-decoration: none; color: #e53e3e; font-size: 14px; line-height: 42px; margin-top: auto; }
-        .event-block { background: white; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; }
-        .event-header { background: #2b6cb0; color: white; padding: 15px 20px; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .event-header:hover { background: #2c5282; }
-        .event-content { display: none; padding: 15px; overflow-x: auto; }
+        .filter-group label { 
+            font-size: 13px; 
+            color: var(--text-muted); 
+            margin-bottom: 6px; 
+            font-weight: 600; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .filter-box select { 
+            padding: 10px 14px; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color); 
+            font-size: 15px; 
+            min-width: 160px; 
+            background-color: white;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .filter-box select:focus { border-color: var(--primary); }
+        .filter-box button { 
+            padding: 10px 20px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 15px; 
+            font-weight: 600;
+            height: 42px; 
+            margin-top: auto; 
+            transition: background 0.2s;
+        }
+        .filter-box button:hover { background: var(--primary-hover); }
+        .filter-box a { 
+            text-decoration: none; 
+            color: var(--danger); 
+            font-size: 14px; 
+            font-weight: 500;
+            line-height: 42px; 
+            margin-top: auto; 
+            transition: opacity 0.2s;
+        }
+        .filter-box a:hover { opacity: 0.8; }
+        
+        /* Аккордеон */
+        .event-block { 
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            margin-bottom: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            overflow: hidden; 
+            transition: transform 0.2s;
+        }
+        .event-header { 
+            background: var(--card-bg); 
+            color: var(--text-main); 
+            padding: 18px 24px; 
+            font-size: 17px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-left: 5px solid var(--primary);
+            transition: background 0.2s;
+        }
+        .event-header:hover { background: #f1f5f9; }
+        
+        .event-content { 
+            display: none; 
+            padding: 0; 
+            overflow-x: auto; 
+            border-top: 1px solid var(--border-color);
+        }
         .event-content.active { display: block; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-        th, td { padding: 10px; text-align: center; border-bottom: 1px solid #e2e8f0; }
-        th { background: #edf2f7; color: #4a5568; font-weight: bold; }
-        tr:hover { background: #f7fafc; }
-        .place-1 { color: #d69e2e; font-weight: bold; font-size: 16px; }
-        .place-2 { color: #a0aec0; font-weight: bold; font-size: 16px; }
-        .place-3 { color: #b7791f; font-weight: bold; font-size: 16px; }
-        .result-best { font-weight: bold; color: #2f855a; font-size: 16px; }
+        
+        /* Таблица результатов */
+        table { width: 100%; border-collapse: collapse; font-size: 15px; }
+        th { 
+            background: #f8fafc; 
+            color: var(--text-muted); 
+            font-weight: 600; 
+            padding: 14px 10px; 
+            text-align: center; 
+            border-bottom: 2px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+        td { 
+            padding: 12px 10px; 
+            text-align: center; 
+            border-bottom: 1px solid var(--border-color); 
+            color: var(--text-main);
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f8fafc; }
+        
+        /* Стили для призовых мест */
+        .place-badge {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 14px;
+            color: white;
+        }
+        .place-1 .place-badge { background-color: #fbbf24; box-shadow: 0 2px 4px rgba(251, 191, 36, 0.4); } /* Золото */
+        .place-2 .place-badge { background-color: #94a3b8; box-shadow: 0 2px 4px rgba(148, 163, 184, 0.4); } /* Серебро */
+        .place-3 .place-badge { background-color: #b45309; box-shadow: 0 2px 4px rgba(180, 83, 9, 0.4); } /* Бронза */
+        
+        .place-empty { color: var(--text-muted); font-weight: bold; }
+
+        /* Стили для ФИО */
+        .athlete-name { text-align: left; font-weight: 600; color: var(--text-main); }
+        .athlete-org { font-size: 12px; color: var(--text-muted); font-weight: 400; display: block; margin-top: 2px; }
+        
+        /* Стили для цифр */
+        .result-best { 
+            font-weight: 700; 
+            color: var(--primary); 
+            font-size: 16px; 
+            background-color: #eff6ff;
+            border-radius: 6px;
+            padding: 4px 8px;
+            display: inline-block;
+        }
+        .attempt-fail { color: var(--danger); font-weight: bold; }
+        .attempt-empty { color: #cbd5e1; }
+        
+        /* Адаптивность для телефонов */
         @media (max-width: 768px) {
-            .event-header { font-size: 16px; }
-            th, td { padding: 6px; font-size: 12px; }
+            body { padding: 10px; }
+            .event-header { padding: 14px 16px; font-size: 15px; }
+            th { padding: 10px 4px; font-size: 10px; }
+            td { padding: 10px 4px; font-size: 13px; }
+            .filter-box { flex-direction: column; gap: 12px; }
+            .filter-box select { width: 100%; }
+            .filter-box button { width: 100%; }
+            .athlete-org { display: none; } /* Скрываем организацию на телефонах для экономии места */
         }
     </style>
 </head>
@@ -40,9 +215,9 @@
 
         <!-- Фильтры -->
         <div class="filter-box">
-            <form method="get" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; justify-content: center;">
+            <form method="get" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; justify-content: center; width: 100%;">
                 <div class="filter-group">
-                    <label for="gender">Пол:</label>
+                    <label for="gender">Пол</label>
                     <select name="gender" id="gender">
                         <option value="">Все</option>
                         {% for g in genders %}
@@ -51,7 +226,7 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="category">Возрастная категория:</label>
+                    <label for="category">Возрастная категория</label>
                     <select name="category" id="category">
                         <option value="">Все</option>
                         {% for c in categories %}
@@ -64,7 +239,7 @@
             </form>
         </div>
 
-        <!-- Сюда будут подгружаться результаты (AJAX) -->
+        <!-- Контейнер для AJAX -->
         <div id="results-container">
             {% include 'results_partial.html' %}
         </div>
@@ -92,13 +267,11 @@
                 .then(response => response.text())
                 .then(html => {
                     const container = document.getElementById('results-container');
-                    // Запоминаем, какие вкладки были открыты
                     const openIndexes = Array.from(document.querySelectorAll('.event-content.active'))
                         .map(el => Array.from(document.querySelectorAll('.event-content')).indexOf(el));
                     
-                    container.innerHTML = html; // Обновляем данные
+                    container.innerHTML = html; 
                     
-                    // Возвращаем открытые вкладки обратно
                     const newContents = document.querySelectorAll('.event-content');
                     openIndexes.forEach(index => {
                         if (newContents[index]) newContents[index].classList.add('active');
@@ -107,7 +280,6 @@
                 .catch(error => console.error('Ошибка обновления:', error));
         }
 
-        // Запускаем обновление каждые 3 секунды (3000 мс)
         setInterval(updateResults, 3000);
     </script>
 </body>
