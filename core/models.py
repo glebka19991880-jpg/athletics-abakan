@@ -27,7 +27,7 @@ class Event(models.Model):
     gender = models.CharField("Пол", max_length=10)
     category = models.CharField("Возрастная группа", max_length=50)
     is_technical = models.BooleanField("Технический вид", default=False)
-    is_running = models.BooleanField("Беговой вид", default=False) # <--- НОВОЕ ПОЛЕ
+    is_running = models.BooleanField("Беговой вид", default=False)
 
     def __str__(self):
         return f"{self.name} - {self.gender} ({self.category})"
@@ -44,7 +44,10 @@ class Result(models.Model):
     attempt_6 = models.FloatField("Попытка 6", null=True, blank=True)
     
     final_result = models.FloatField("Итоговый результат", null=True, blank=True)
-    time_result = models.FloatField("Время (сек)", null=True, blank=True) # <--- НОВОЕ ПОЛЕ
+    time_result = models.FloatField("Время (сек)", null=True, blank=True)
+    
+    # НОВОЕ ПОЛЕ: Заявленный результат (то, что было в Excel)
+    declared_result = models.CharField("Заявленный результат", max_length=50, null=True, blank=True)
     
     place = models.IntegerField("Место", null=True, blank=True)
     assigned_rank = models.CharField("Присвоенный разряд", max_length=20, blank=True)
