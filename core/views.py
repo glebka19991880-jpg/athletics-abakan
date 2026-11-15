@@ -84,7 +84,6 @@ def judge_input(request):
     selected_athlete_id = request.GET.get('athlete_id')
     existing_result = None
     
-    # ИСПРАВЛЕНО: используем current_event вместо несуществующего event_id
     if current_event and selected_athlete_id:
         existing_result = Result.objects.filter(
             event_id=current_event.id, 
@@ -215,3 +214,51 @@ def export_long_jump(request, event_id):
     response["Content-Disposition"] = f'attachment; filename="protocol_{discipline}_{gender_param}.xlsx"'
     wb.save(response)
     return response
+
+
+# --- НОВАЯ ФУНКЦИЯ ДЛЯ ЗРИТЕЛЕЙ ---
+def spectator_results(request):
+    # Получаем все соревнования (виды)
+    events = Event.objects.all().order_by('name')
+    
+    # Получаем выбранный год рождения из фильтра (если он есть)
+    selected_year = request.GET.get('year')
+    
+    # Собираем данные по каждому виду
+    events_data = []
+    for event in events:
+        # Берем результаты для этого вида
+        results = Result.objects.filter(event=event).select_related('athlete')
+        
+        # Фильтруем по году рождения, если зритель выбрал год
+        if selected_year:
+            results = results.filter(athlete__birth_date__year=selected_year)
+            
+        # Сортируем по убыванию лучшего результата
+        results = results.order_by('-final_result')
+        
+        # Формируем список для вывода
+        results_list = []
+        for r in results:
+            results_list.append({
+                'athlete_name': r.athlete.full_name,
+                'birth_year': r.athlete.birth_date.year if r.athlete.birth_date else '',
+                'attempts': [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6],
+                'final_result': r.final_result,
+            })
+            
+        events_data.append({
+            'event': event,
+            'results': results_list
+        })
+
+    # Получаем список уникальных годов рождения для выпадающего списка фильтра
+    years = Athlete.objects.dates('birth_date', 'year', order='DESC')
+    years_list = [y.year for y in years]
+
+    context = {
+        'events_data': events_data,
+        'years': years_list,
+        'selected_year': selected_year,
+    }
+    return render(request, 'results.html', context)
