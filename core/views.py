@@ -26,18 +26,30 @@ def upload_excel(request):
 
 
 def judge_input(request):
-    events = Event.objects.filter(is_technical=True)
-    event_id = request.GET.get('event')
-    athletes = []
-    current_event = None
+    # 1. ПРОВЕРКА API-КЛЮЧА (ДОСТУПА)
+    token = request.GET.get('token')
+    if not token:
+        return HttpResponse("Доступ запрещен. В ссылке отсутствует параметр ?token=...", status=403)
     
-    if event_id:
-        current_event = Event.objects.filter(id=event_id).first()
-        if current_event:
-            athletes = Athlete.objects.filter(competition=current_event.competition).order_by('full_name')
+    try:
+        api_key = ApiKey.objects.get(key=token, is_active=True)
+    except ApiKey.DoesNotExist:
+        return HttpResponse("Доступ запрещен. Неверный или неактивный API-ключ.", status=403)
 
+    # Если ключ верный, получаем соревнование, к которому он привязан
+    current_event = api_key.event
+    events = Event.objects.filter(id=current_event.id)
+    
+    # Спортсмены выбранного соревнования
+    athletes = Athlete.objects.filter(competition=current_event.competition).order_by('full_name')
+
+    # Обработка сохранения результатов (POST)
     if request.method == "POST":
         event_id = request.POST.get('event_id') or request.POST.get('event')
+        # Проверка, что судья сохраняет в "свое" соревнование
+        if str(current_event.id) != str(event_id):
+            return HttpResponse("Ошибка: вы пытаетесь сохранить результат в чужое соревнование.", status=403)
+
         athlete_id = request.POST.get('athlete_id')
         
         def parse_float(val):
@@ -52,11 +64,9 @@ def judge_input(request):
                 return 0.0
 
         attempts = [parse_float(request.POST.get(f'attempt_{i}')) for i in range(1, 7)]
-        
         valid_attempts = [a for a in attempts if a > 0]
         best_result = max(valid_attempts) if valid_attempts else 0.0
         
-        # Убрали 'is_record' и 'wind', чтобы не было ошибки базы данных
         Result.objects.update_or_create(
             event_id=event_id,
             athlete_id=athlete_id,
@@ -67,14 +77,15 @@ def judge_input(request):
             }
         )
         messages.success(request, 'Результат сохранен!')
-        return redirect(f'/judge/?event={event_id}&athlete_id={athlete_id}')
+        # ВАЖНО: передаем token при редиректе
+        return redirect(f'/judge/?token={token}&event={event_id}&athlete_id={athlete_id}')
 
     selected_athlete_id = request.GET.get('athlete_id')
     existing_result = None
     
     if event_id and selected_athlete_id:
         existing_result = Result.objects.filter(
-            event_id=event_id, 
+            event_id=current_event.id, 
             athlete_id=selected_athlete_id
         ).first()
 
@@ -84,6 +95,7 @@ def judge_input(request):
         'current_event': current_event,
         'selected_athlete_id': int(selected_athlete_id) if selected_athlete_id else None,
         'existing_result': existing_result, 
+        'token': token, # Передаем токен в шаблон!
     }
     return render(request, 'judge.html', context)
 
@@ -146,6 +158,11 @@ def export_excel(request, event_id):
 
 
 def export_long_jump(request, event_id):
+    # (Опционально) Можно добавить проверку токена и тут, если нужно защитить скачивание
+    token = request.GET.get('token')
+    if not token:
+        return HttpResponse("Доступ запрещен. Отсутствует API-ключ (token).", status=403)
+    
     discipline = request.GET.get('discipline', 'длина').lower()
     gender_param = request.GET.get('gender', 'м').lower()
     
