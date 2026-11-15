@@ -1,1 +1,71 @@
+{% for data in events_data %}
+<div class="event-block">
+    <div class="event-header" onclick="toggleEvent(this)">
+        <span>{{ data.event.name }} ({{ data.event.gender }} - {{ data.event.category }})</span>
+        <span>▼</span>
+    </div>
+    
+    <div class="event-content">
+        {% if data.results %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Место</th>
+                    <th style="text-align: left;">ФИО / Организация</th>
+                    <th>Год рожд.</th>
+                    <th>Попытка 1</th>
+                    <th>Попытка 2</th>
+                    <th>Попытка 3</th>
+                    <th>Попытка 4</th>
+                    <th>Попытка 5</th>
+                    <th>Попытка 6</th>
+                    <th>Лучший результат</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for res in data.results %}
+                <tr>
+                    <!-- Выводим место, если есть результат -->
+                    {% if res.final_result and res.final_result != 0.0 %}
+                        <td class="{% if forloop.counter == 1 %}place-1{% elif forloop.counter == 2 %}place-2{% elif forloop.counter == 3 %}place-3{% endif %}">
+                            {{ forloop.counter }}
+                        </td>
+                    {% else %}
+                        <td>—</td>
+                    {% endif %}
 
+                    <td style="text-align: left;">
+                        <strong>{{ res.athlete_name }}</strong>
+                        {% if res.organization %}
+                            <br><span style="font-size: 12px; color: #666;">{{ res.organization }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ res.birth_year }}</td>
+                    
+                    <!-- Вывод попыток -->
+                    {% for att in res.attempts %}
+                        <td>
+                            {% if att and att > 0 %}{{ att|floatformat:"-2" }}
+                            {% elif att == -1 %}<span style="color: red; font-weight: bold;">X</span>
+                            {% else %}—{% endif %}
+                        </td>
+                    {% endfor %}
+                    
+                    <!-- Вывод лучшего результата -->
+                    <td class="result-best">
+                        {% if res.final_result and res.final_result != 0.0 %}
+                            {{ res.final_result|floatformat:"-2" }}
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p style="text-align: center; color: #718096;">В этом виде пока нет заявленных спортсменов.</p>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+    <p style="text-align: center;">По вашему запросу видов спорта не найдено.</p>
+{% endfor %}
