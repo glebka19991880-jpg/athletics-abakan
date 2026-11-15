@@ -233,6 +233,7 @@ def export_long_jump(request, event_id):
     return response
 
 
+# --- ФУНКЦИИ ДЛЯ ЗРИТЕЛЕЙ ---
 def spectator_results(request):
     events = Event.objects.all().order_by('name')
     
@@ -300,3 +301,45 @@ def spectator_results(request):
         'selected_category': selected_category,
     }
     return render(request, 'results.html', context)
+
+# НОВАЯ ФУНКЦИЯ ДЛЯ AJAX
+def spectator_results_ajax(request):
+    events = Event.objects.all().order_by('name')
+    selected_gender = request.GET.get('gender')
+    selected_category = request.GET.get('category')
+    
+    if selected_gender:
+        if selected_gender == 'М': events = events.filter(gender__icontains='м')
+        elif selected_gender == 'Ж': events = events.filter(gender__icontains='ж')
+    if selected_category: events = events.filter(category__icontains=selected_category)
+
+    events_data = []
+    for event in events:
+        if not event.competition: continue
+        all_athletes = Athlete.objects.filter(competition=event.competition)
+        results_list = []
+        for athlete in all_athletes:
+            r = Result.objects.filter(event=event, athlete=athlete).first()
+            if r:
+                attempts = [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6]
+                final_res = r.final_result
+            else:
+                attempts = [None]*6
+                final_res = None
+            results_list.append({
+                'athlete_name': athlete.full_name,
+                'organization': athlete.organization or '',
+                'birth_year': athlete.birth_date.year if athlete.birth_date else '',
+                'attempts': attempts,
+                'final_result': final_res,
+            })
+        def get_sort_key(item):
+            res = item['final_result']
+            if res is None: return -1.0
+            try: return float(res)
+            except: return -1.0
+        results_list.sort(key=get_sort_key, reverse=True)
+        events_data.append({'event': event, 'results': results_list})
+
+    # Возвращаем только кусок HTML для обновления
+    return render(request, 'results_ajax.html', {'events_data': events_data})
