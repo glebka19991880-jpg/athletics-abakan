@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Мета-теги для поисковиков (SEO) -->
     <meta name="description" content="Онлайн-результаты соревнований по легкой атлетике города Абакана. Смотрите места, попытки и лучшие результаты спортсменов.">
     <meta name="keywords" content="легкая атлетика, Абакан, результаты соревнований, протоколы, спорт">
     <title>Результаты соревнований | Легкая атлетика Абакан</title>
@@ -12,7 +11,6 @@
         .container { max-width: 1000px; margin: 0 auto; }
         h1 { text-align: center; color: #1a365d; margin-bottom: 30px; }
         
-        /* Фильтры */
         .filter-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
         .filter-group { display: flex; flex-direction: column; align-items: flex-start; }
         .filter-group label { font-size: 14px; color: #4a5568; margin-bottom: 5px; font-weight: bold; }
@@ -20,14 +18,12 @@
         .filter-box button { padding: 8px 15px; background: #3182ce; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; height: 42px; margin-top: auto; }
         .filter-box a { text-decoration: none; color: #e53e3e; font-size: 14px; line-height: 42px; margin-top: auto; }
         
-        /* Аккордеон */
         .event-block { background: white; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; }
         .event-header { background: #2b6cb0; color: white; padding: 15px 20px; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .event-header:hover { background: #2c5282; }
         .event-content { display: none; padding: 15px; overflow-x: auto; }
         .event-content.active { display: block; }
         
-        /* Таблица результатов */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
         th, td { padding: 10px; text-align: center; border-bottom: 1px solid #e2e8f0; }
         th { background: #edf2f7; color: #4a5568; font-weight: bold; }
@@ -37,7 +33,6 @@
         .place-3 { color: #b7791f; font-weight: bold; font-size: 16px; }
         .result-best { font-weight: bold; color: #2f855a; }
         
-        /* Адаптивность для телефонов */
         @media (max-width: 768px) {
             .event-header { font-size: 16px; }
             th, td { padding: 6px; font-size: 12px; }
@@ -48,10 +43,8 @@
     <div class="container">
         <h1>Результаты соревнований</h1>
 
-        <!-- Фильтры -->
         <div class="filter-box">
             <form method="get" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; justify-content: center;">
-                
                 <div class="filter-group">
                     <label for="gender">Пол:</label>
                     <select name="gender" id="gender">
@@ -61,7 +54,6 @@
                         {% endfor %}
                     </select>
                 </div>
-
                 <div class="filter-group">
                     <label for="category">Возрастная категория:</label>
                     <select name="category" id="category">
@@ -71,13 +63,11 @@
                         {% endfor %}
                     </select>
                 </div>
-
                 <button type="submit">Применить</button>
                 <a href="{% url 'spectator_results' %}">Сбросить</a>
             </form>
         </div>
 
-        <!-- Список видов -->
         {% for data in events_data %}
         <div class="event-block">
             <div class="event-header" onclick="toggleEvent(this)">
@@ -103,19 +93,17 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Счетчик мест для тех, у кого есть результат -->
                         {% with place_counter=0 %}
                         {% for res in data.results %}
                         <tr>
-                            <!-- Если есть результат, увеличиваем счетчик и показываем место -->
-                            {% if res.final_result and res.final_result > 0 %}
+                            <!-- Проверяем результат: если он не пустой и не 0.0, даем место -->
+                            {% if res.final_result and res.final_result != 0.0 %}
                                 {% with place_counter=place_counter|add:1 %}
                                 <td class="{% if place_counter == 1 %}place-1{% elif place_counter == 2 %}place-2{% elif place_counter == 3 %}place-3{% endif %}">
                                     {{ place_counter }}
                                 </td>
                                 {% endwith %}
                             {% else %}
-                                <!-- Если результата нет, место не присваиваем -->
                                 <td>—</td>
                             {% endif %}
 
@@ -127,6 +115,7 @@
                             </td>
                             <td>{{ res.birth_year }}</td>
                             
+                            <!-- Попытки: если 0.0 или пусто, выводим прочерк -->
                             {% for att in res.attempts %}
                                 <td>
                                     {% if att and att > 0 %}{{ att|floatformat:"-2" }}
@@ -135,9 +124,10 @@
                                 </td>
                             {% endfor %}
                             
+                            <!-- Лучший результат: проверяем на 0.0 -->
                             <td class="result-best">
-                                {% if res.final_result and res.final_result > 0 %}
-                                    {{ res.final_result|floatformat:"-2" }}
+                                {% if res.final_result and res.final_result != 0.0 %}
+                                    <strong>{{ res.final_result|floatformat:"-2" }}</strong>
                                 {% else %}—{% endif %}
                             </td>
                         </tr>
@@ -155,7 +145,6 @@
         {% endfor %}
     </div>
 
-    <!-- Скрипт для работы аккордеона -->
     <script>
         function toggleEvent(element) {
             const content = element.nextElementSibling;
