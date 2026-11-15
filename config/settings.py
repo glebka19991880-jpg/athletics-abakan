@@ -10,7 +10,9 @@ ALLOWED_HOSTS = ['*']
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://postgres:xkrYKUvRVtvAkoxKHKJdqneoLyPnwKgD@postgres-z0ui.railway.internal:5432/railway'
+        default='postgresql://postgres:xkrYKUvRVtvAkoxKHKJdqneoLyPnwKgD@postgres-z0ui.railway.internal:5432/railway',
+        # ВАЖНО: Отключаем серверные курсоры для работы через пулер Railway
+        DISABLE_SERVER_SIDE_CURSORS=True
     )
 }
 
