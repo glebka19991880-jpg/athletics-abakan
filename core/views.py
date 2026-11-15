@@ -37,7 +37,7 @@ def judge_input(request):
 
     current_event = api_key.event
     events = Event.objects.filter(id=current_event.id)
-    athletes = Athlete.objects.filter(competition=current_event.competition).order_by('full_name')
+    athletes = list(Athlete.objects.filter(competition=current_event.competition).order_by('full_name'))
 
     if request.method == "POST":
         event_id = request.POST.get('event_id') or request.POST.get('event')
@@ -57,20 +57,37 @@ def judge_input(request):
             except ValueError:
                 return 0.0
 
-        attempts = [parse_float(request.POST.get(f'attempt_{i}')) for i in range(1, 7)]
-        valid_attempts = [a for a in attempts if a > 0]
-        best_result = max(valid_attempts) if valid_attempts else 0.0
-        
-        Result.objects.update_or_create(
+        # Получаем или создаем результат
+        result, created = Result.objects.get_or_create(
             event_id=current_event.id,
-            athlete_id=athlete_id,
-            defaults={
-                'attempt_1': attempts[0], 'attempt_2': attempts[1], 'attempt_3': attempts[2],
-                'attempt_4': attempts[3], 'attempt_5': attempts[4], 'attempt_6': attempts[5],
-                'final_result': best_result
-            }
+            athlete_id=athlete_id
         )
+
+        # Обновляем ТОЛЬКО те попытки, которые ввел судья
+        for i in range(1, 7):
+            val = request.POST.get(f'attempt_{i}')
+            if val is not None and str(val).strip() != '':
+                setattr(result, f'attempt_{i}', parse_float(val))
+
+        # Пересчитываем лучший результат
+        attempts = [result.attempt_1, result.attempt_2, result.attempt_3, result.attempt_4, result.attempt_5, result.attempt_6]
+        valid_attempts = [a for a in attempts if a and a > 0]
+        result.final_result = max(valid_attempts) if valid_attempts else 0.0
+        result.save()
+
         messages.success(request, 'Результат сохранен!')
+
+        # Если нажата кнопка "Сохранить и Следующий"
+        if 'next_athlete' in request.POST:
+            current_index = next((i for i, a in enumerate(athletes) if str(a.id) == str(athlete_id)), -1)
+            if current_index != -1 and current_index + 1 < len(athletes):
+                next_id = athletes[current_index + 1].id
+                return redirect(f'/judge/?token={token}&event={current_event.id}&athlete_id={next_id}')
+            else:
+                # Если это был последний спортсмен, переходим к первому
+                if athletes:
+                    return redirect(f'/judge/?token={token}&event={current_event.id}&athlete_id={athletes[0].id}')
+
         return redirect(f'/judge/?token={token}&event={current_event.id}&athlete_id={athlete_id}')
 
     selected_athlete_id = request.GET.get('athlete_id')
@@ -208,7 +225,6 @@ def export_long_jump(request, event_id):
     return response
 
 
-# --- ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗРИТЕЛЕЙ ---
 def spectator_results(request):
     events = Event.objects.all().order_by('name')
     
@@ -233,7 +249,6 @@ def spectator_results(request):
         
         results_list = []
         for athlete in all_athletes:
-            # Ищем результат конкретного спортсмена в этом виде
             r = Result.objects.filter(event=event, athlete=athlete).first()
             
             if r:
@@ -251,7 +266,6 @@ def spectator_results(request):
                 'final_result': final_res,
             })
         
-        # Безопасная сортировка
         def get_sort_key(item):
             res = item['final_result']
             if res is None:
