@@ -1,7 +1,7 @@
 {% for data in events_data %}
 <div class="event-block">
     <div class="event-header" onclick="toggleEvent(this)">
-        <span>{{ data.event.name }} ({{ data.event.gender }} - {{ data.event.category }})</span>
+        <span>{{ data.event.name }} <span style="font-weight: 500; color: #64748b; margin-left: 10px;">({{ data.event.gender }} - {{ data.event.category }})</span></span>
         <span>▼</span>
     </div>
     
@@ -19,13 +19,13 @@
                     <th>Попытка 4</th>
                     <th>Попытка 5</th>
                     <th>Попытка 6</th>
-                    <th width="100">Лучший</th>
+                    <th width="110">Результат</th>
                 </tr>
             </thead>
             <tbody>
                 {% for res in data.results %}
                 <tr>
-                    <!-- Место (красивый кружок) -->
+                    <!-- Место (красивый градиентный кружок) -->
                     {% if res.final_result and res.final_result != 0.0 %}
                         <td class="{% if forloop.counter == 1 %}place-1{% elif forloop.counter == 2 %}place-2{% elif forloop.counter == 3 %}place-3{% endif %}">
                             <span class="place-badge">{{ forloop.counter }}</span>
@@ -64,12 +64,14 @@
             </tbody>
         </table>
         {% else %}
-            <p style="text-align: center; color: var(--text-muted); padding: 20px;">В этом виде пока нет заявленных спортсменов.</p>
+            <div style="text-align: center; padding: 40px 20px;">
+                <p style="color: var(--text-muted); font-size: 16px; font-weight: 500;">В этом виде пока нет результатов.</p>
+            </div>
         {% endif %}
     </div>
 </div>
 {% empty %}
-    <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; color: var(--text-muted);">
-        По вашему запросу видов спорта не найдено.
+    <div style="text-align: center; padding: 50px 20px; background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <p style="color: var(--text-muted); font-size: 18px; font-weight: 600;">По вашему запросу видов спорта не найдено.</p>
     </div>
 {% endfor %}
