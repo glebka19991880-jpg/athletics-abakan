@@ -26,7 +26,6 @@ def upload_excel(request):
 
 
 def judge_input(request):
-    # 1. ПРОВЕРКА API-КЛЮЧА (ДОСТУПА)
     token = request.GET.get('token')
     if not token:
         return HttpResponse("Доступ запрещен. В ссылке отсутствует параметр ?token=...", status=403)
@@ -36,17 +35,12 @@ def judge_input(request):
     except ApiKey.DoesNotExist:
         return HttpResponse("Доступ запрещен. Неверный или неактивный API-ключ.", status=403)
 
-    # Если ключ верный, получаем соревнование, к которому он привязан
     current_event = api_key.event
     events = Event.objects.filter(id=current_event.id)
-    
-    # Спортсмены выбранного соревнования
     athletes = Athlete.objects.filter(competition=current_event.competition).order_by('full_name')
 
-    # Обработка сохранения результатов (POST)
     if request.method == "POST":
         event_id = request.POST.get('event_id') or request.POST.get('event')
-        # Проверка, что судья сохраняет в "свое" соревнование
         if str(current_event.id) != str(event_id):
             return HttpResponse("Ошибка: вы пытаетесь сохранить результат в чужое соревнование.", status=403)
 
@@ -77,10 +71,8 @@ def judge_input(request):
             }
         )
         messages.success(request, 'Результат сохранен!')
-        # Передаем token при редиректе
         return redirect(f'/judge/?token={token}&event={current_event.id}&athlete_id={athlete_id}')
 
-    # --- ОБРАБОТКА ОТКРЫТИЯ СТРАНИЦЫ (GET) ---
     selected_athlete_id = request.GET.get('athlete_id')
     existing_result = None
     
@@ -216,28 +208,30 @@ def export_long_jump(request, event_id):
     return response
 
 
-# --- НОВАЯ ФУНКЦИЯ ДЛЯ ЗРИТЕЛЕЙ ---
+# --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗРИТЕЛЕЙ ---
 def spectator_results(request):
-    # Получаем все соревнования (виды)
+    # Получаем все виды
     events = Event.objects.all().order_by('name')
     
-    # Получаем выбранный год рождения из фильтра (если он есть)
-    selected_year = request.GET.get('year')
+    # Получаем выбранные фильтры из URL
+    selected_gender = request.GET.get('gender') # 'М' или 'Ж'
+    selected_category = request.GET.get('category') # Например, '2008 и ст.'
     
+    # Применяем фильтры к СПИСКУ ВИДОВ (а не к результатам)
+    if selected_gender:
+        if selected_gender == 'М':
+            events = events.filter(gender__icontains='м')
+        elif selected_gender == 'Ж':
+            events = events.filter(gender__icontains='ж')
+            
+    if selected_category:
+        events = events.filter(category__icontains=selected_category)
+
     # Собираем данные по каждому виду
     events_data = []
     for event in events:
-        # Берем результаты для этого вида
-        results = Result.objects.filter(event=event).select_related('athlete')
+        results = Result.objects.filter(event=event).select_related('athlete').order_by('-final_result')
         
-        # Фильтруем по году рождения, если зритель выбрал год
-        if selected_year:
-            results = results.filter(athlete__birth_date__year=selected_year)
-            
-        # Сортируем по убыванию лучшего результата
-        results = results.order_by('-final_result')
-        
-        # Формируем список для вывода
         results_list = []
         for r in results:
             results_list.append({
@@ -252,13 +246,14 @@ def spectator_results(request):
             'results': results_list
         })
 
-    # Получаем список уникальных годов рождения для выпадающего списка фильтра
-    years = Athlete.objects.dates('birth_date', 'year', order='DESC')
-    years_list = [y.year for y in years]
+    # Получаем список уникальных категорий из базы для выпадающего списка
+    categories = Event.objects.values_list('category', flat=True).distinct().order_by('category')
 
     context = {
         'events_data': events_data,
-        'years': years_list,
-        'selected_year': selected_year,
+        'genders': ['М', 'Ж'],
+        'categories': categories,
+        'selected_gender': selected_gender,
+        'selected_category': selected_category,
     }
     return render(request, 'results.html', context)
