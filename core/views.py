@@ -57,11 +57,15 @@ def judge_input(request):
             except ValueError:
                 return 0.0
 
-        # ИСПРАВЛЕНИЕ: Добавили defaults, чтобы база не падала при создании новой записи
+        # ИСПРАВЛЕНИЕ: Передаем пустые значения для всех полей при создании
         result, created = Result.objects.get_or_create(
             event_id=current_event.id,
             athlete_id=athlete_id,
-            defaults={'final_result': 0.0}
+            defaults={
+                'final_result': 0.0,
+                'assigned_rank': '',
+                'place': None
+            }
         )
 
         # Обновляем ТОЛЬКО те попытки, которые ввел судья
@@ -85,7 +89,6 @@ def judge_input(request):
                 next_id = athletes[current_index + 1].id
                 return redirect(f'/judge/?token={token}&event={current_event.id}&athlete_id={next_id}')
             else:
-                # Если это был последний спортсмен, переходим к первому
                 if athletes:
                     return redirect(f'/judge/?token={token}&event={current_event.id}&athlete_id={athletes[0].id}')
 
@@ -130,7 +133,11 @@ def input_result(request):
         result, _ = Result.objects.update_or_create(
             event=event,
             athlete_id=athlete_id,
-            defaults={"final_result": value}
+            defaults={
+                "final_result": value,
+                "assigned_rank": "",
+                "place": None
+            }
         )
         return JsonResponse({"status": "ok", "id": result.id})
     
