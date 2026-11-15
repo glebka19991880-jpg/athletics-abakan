@@ -210,14 +210,11 @@ def export_long_jump(request, event_id):
 
 # --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗРИТЕЛЕЙ ---
 def spectator_results(request):
-    # Получаем все виды
     events = Event.objects.all().order_by('name')
     
-    # Получаем выбранные фильтры из URL
-    selected_gender = request.GET.get('gender') # 'М' или 'Ж'
-    selected_category = request.GET.get('category') # Например, '2008 и ст.'
+    selected_gender = request.GET.get('gender')
+    selected_category = request.GET.get('category')
     
-    # Применяем фильтры к СПИСКУ ВИДОВ (а не к результатам)
     if selected_gender:
         if selected_gender == 'М':
             events = events.filter(gender__icontains='м')
@@ -227,26 +224,43 @@ def spectator_results(request):
     if selected_category:
         events = events.filter(category__icontains=selected_category)
 
-    # Собираем данные по каждому виду
     events_data = []
     for event in events:
-        results = Result.objects.filter(event=event).select_related('athlete').order_by('-final_result')
+        # Берем ВСЕХ спортсменов, которые заявлены в этом соревновании (competition)
+        if not event.competition:
+            continue
+            
+        all_athletes = Athlete.objects.filter(competition=event.competition)
         
         results_list = []
-        for r in results:
+        for athlete in all_athletes:
+            # Ищем результат этого спортсмена в этом виде
+            r = Result.objects.filter(event=event, athlete=athlete).first()
+            
+            # Если результат есть, берем данные из него, если нет - ставим пустоту
+            if r:
+                attempts = [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6]
+                final_res = r.final_result
+            else:
+                attempts = [None, None, None, None, None, None]
+                final_res = None
+
             results_list.append({
-                'athlete_name': r.athlete.full_name,
-                'birth_year': r.athlete.birth_date.year if r.athlete.birth_date else '',
-                'attempts': [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6],
-                'final_result': r.final_result,
+                'athlete_name': athlete.full_name,
+                'organization': athlete.organization or '',
+                'birth_year': athlete.birth_date.year if athlete.birth_date else '',
+                'attempts': attempts,
+                'final_result': final_res,
             })
+        
+        # Сортируем список: сначала те, у кого есть результат (по убыванию), потом остальные
+        results_list.sort(key=lambda x: x['final_result'] if x['final_result'] else -1, reverse=True)
             
         events_data.append({
             'event': event,
             'results': results_list
         })
 
-    # Получаем список уникальных категорий из базы для выпадающего списка
     categories = Event.objects.values_list('category', flat=True).distinct().order_by('category')
 
     context = {
