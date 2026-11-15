@@ -24,10 +24,8 @@ from core.models import Competition, Event, Athlete
 try:
     comp = Competition.objects.get(name='Открытие 2026')
     
-    # Привязываем всех спортсменов к этому соревнованию
     Athlete.objects.filter(competition__isnull=True).update(competition=comp)
 
-    # Технические виды
     technical_events = [
         ('Прыжок в длину', 'М', '2008 и ст.'), ('Прыжок в длину', 'М', '2009-2010'), ('Прыжок в длину', 'М', '2011-2012'),
         ('Прыжок в длину', 'Ж', '2008 и ст.'), ('Прыжок в длину', 'Ж', '2009-2010'), ('Прыжок в длину', 'Ж', '2011-2012'),
@@ -42,7 +40,6 @@ try:
     for name, gender, category in technical_events:
         Event.objects.get_or_create(competition=comp, name=name, gender=gender, category=category, is_technical=True, is_running=False)
 
-    # Беговые виды (ДОБАВЛЕНО)
     running_events = [
         ('Бег 100 м', 'М', '2008 и ст.'), ('Бег 100 м', 'Ж', '2008 и ст.'),
         ('Бег 200 м', 'М', '2008 и ст.'), ('Бег 200 м', 'Ж', '2008 и ст.'),
