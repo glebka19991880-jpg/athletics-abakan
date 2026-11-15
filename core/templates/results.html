@@ -6,7 +6,6 @@
     <meta name="description" content="Онлайн-результаты соревнований по легкой атлетике города Абакана.">
     <title>Результаты соревнований | Легкая атлетика Абакан</title>
     <style>
-        /* ... ВАШИ СТИЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ ... */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 1000px; margin: 0 auto; }
         h1 { text-align: center; color: #1a365d; margin-bottom: 30px; }
@@ -39,8 +38,9 @@
     <div class="container">
         <h1>Результаты соревнований</h1>
 
+        <!-- Фильтры -->
         <div class="filter-box">
-            <form method="get" id="filterForm" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; justify-content: center;">
+            <form method="get" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; justify-content: center;">
                 <div class="filter-group">
                     <label for="gender">Пол:</label>
                     <select name="gender" id="gender">
@@ -64,14 +64,14 @@
             </form>
         </div>
 
-        <!-- Вот сюда будет подгружаться AJAX -->
+        <!-- Сюда будут подгружаться результаты (AJAX) -->
         <div id="results-container">
-            {% include 'results_ajax.html' %}
+            {% include 'results_partial.html' %}
         </div>
     </div>
 
+    <!-- Скрипт аккордеона -->
     <script>
-        // Функция для открытия/закрытия аккордеона
         function toggleEvent(element) {
             const content = element.nextElementSibling;
             content.classList.toggle('active');
@@ -82,29 +82,32 @@
                 arrow.textContent = '▼';
             }
         }
+    </script>
 
-        // Функция для обновления данных без перезагрузки страницы
+    <!-- Скрипт автообновления (AJAX) -->
+    <script>
         function updateResults() {
             const urlParams = new URLSearchParams(window.location.search).toString();
             fetch(`/results/ajax/?${urlParams}`)
                 .then(response => response.text())
                 .then(html => {
-                    // Вставляем новые данные, но сохраняем открытые вкладки
                     const container = document.getElementById('results-container');
+                    // Запоминаем, какие вкладки были открыты
                     const openIndexes = Array.from(document.querySelectorAll('.event-content.active'))
                         .map(el => Array.from(document.querySelectorAll('.event-content')).indexOf(el));
                     
-                    container.innerHTML = html;
+                    container.innerHTML = html; // Обновляем данные
                     
-                    // Возвращаем открытые вкладки
+                    // Возвращаем открытые вкладки обратно
                     const newContents = document.querySelectorAll('.event-content');
                     openIndexes.forEach(index => {
                         if (newContents[index]) newContents[index].classList.add('active');
                     });
-                });
+                })
+                .catch(error => console.error('Ошибка обновления:', error));
         }
 
-        // Запускаем автообновление каждые 3 секунды
+        // Запускаем обновление каждые 3 секунды (3000 мс)
         setInterval(updateResults, 3000);
     </script>
 </body>
