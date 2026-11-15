@@ -208,7 +208,7 @@ def export_long_jump(request, event_id):
     return response
 
 
-# --- ФУНКЦИЯ ДЛЯ ЗРИТЕЛЕЙ С ПОЛНЫМ СПИСКОМ И БЕЗОПАСНОЙ СОРТИРОВКОЙ ---
+# --- ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗРИТЕЛЕЙ ---
 def spectator_results(request):
     events = Event.objects.all().order_by('name')
     
@@ -229,7 +229,6 @@ def spectator_results(request):
         if not event.competition:
             continue
             
-        # Берем ВСЕХ спортсменов, которые заявлены в этом соревновании
         all_athletes = Athlete.objects.filter(competition=event.competition)
         
         results_list = []
@@ -252,7 +251,7 @@ def spectator_results(request):
                 'final_result': final_res,
             })
         
-        # Безопасная сортировка (превращаем None в -1.0, чтобы не было ошибки типов)
+        # Безопасная сортировка
         def get_sort_key(item):
             res = item['final_result']
             if res is None:
