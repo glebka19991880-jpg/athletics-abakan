@@ -68,7 +68,7 @@ def judge_input(request):
         best_result = max(valid_attempts) if valid_attempts else 0.0
         
         Result.objects.update_or_create(
-            event_id=event_id,
+            event_id=current_event.id,
             athlete_id=athlete_id,
             defaults={
                 'attempt_1': attempts[0], 'attempt_2': attempts[1], 'attempt_3': attempts[2],
@@ -77,13 +77,15 @@ def judge_input(request):
             }
         )
         messages.success(request, 'Результат сохранен!')
-        # ВАЖНО: передаем token при редиректе
-        return redirect(f'/judge/?token={token}&event={event_id}&athlete_id={athlete_id}')
+        # Передаем token при редиректе
+        return redirect(f'/judge/?token={token}&event={current_event.id}&athlete_id={athlete_id}')
 
+    # --- ОБРАБОТКА ОТКРЫТИЯ СТРАНИЦЫ (GET) ---
     selected_athlete_id = request.GET.get('athlete_id')
     existing_result = None
     
-    if event_id and selected_athlete_id:
+    # ИСПРАВЛЕНО: используем current_event вместо несуществующего event_id
+    if current_event and selected_athlete_id:
         existing_result = Result.objects.filter(
             event_id=current_event.id, 
             athlete_id=selected_athlete_id
@@ -95,7 +97,7 @@ def judge_input(request):
         'current_event': current_event,
         'selected_athlete_id': int(selected_athlete_id) if selected_athlete_id else None,
         'existing_result': existing_result, 
-        'token': token, # Передаем токен в шаблон!
+        'token': token,
     }
     return render(request, 'judge.html', context)
 
@@ -158,7 +160,6 @@ def export_excel(request, event_id):
 
 
 def export_long_jump(request, event_id):
-    # (Опционально) Можно добавить проверку токена и тут, если нужно защитить скачивание
     token = request.GET.get('token')
     if not token:
         return HttpResponse("Доступ запрещен. Отсутствует API-ключ (token).", status=403)
