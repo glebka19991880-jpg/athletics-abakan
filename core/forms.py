@@ -16,24 +16,20 @@ class ImportExcelForm(forms.Form):
         
         created_count = 0
         
-        # Карта столбцов: индекс колонки (начиная с 0) -> Название вида
-        # M=12 (100м), N=13 (200м), O=14 (400м), P=15 (800м), Q=16 (1500м), R=17 (3000м)
-        # S=18 (110сб), T=19 (высота), U=20 (длина), V=21 (тройной), W=22 (ядро)
-        events_map = {
-            12: 'Бег 100 м', 13: 'Бег 200 м', 14: 'Бег 400 м', 15: 'Бег 800 м',
-            16: 'Бег 1500 м', 17: 'Бег 3000 м', 18: 'Бег 110 с/б',
-            19: 'Прыжок в высоту', 20: 'Прыжок в длину', 21: 'Тройной прыжок', 22: 'Толкание ядра'
-        }
+        # 1. Читаем заголовки видов из 2-й строки (начиная с 13-й колонки, т.е. M)
+        event_columns = {}
+        for idx, cell in enumerate(sheet[2]):
+            if idx >= 12 and cell.value: # Берем все колонки после L (12)
+                event_columns[idx] = str(cell.value).strip()
 
-        # Данные начинаются с 3-й строки (2-я - заголовки)
+        # 2. Проходим по спортсменам (с 3-й строки)
         for row in sheet.iter_rows(min_row=3, values_only=True):
-            if not row[3]: # Если нет ФИО (столбец D, индекс 3)
+            if not row[3]: # Если нет ФИО
                 continue
                 
             full_name = str(row[3]).strip()
             birth_date_val = row[4]
             
-            # Обработка даты рождения
             birth_date = None
             if isinstance(birth_date_val, datetime):
                 birth_date = birth_date_val.date()
@@ -43,58 +39,54 @@ class ImportExcelForm(forms.Form):
             organization = str(row[7]) if row[7] else ""
             coach = str(row[8]) if row[8] else ""
             
-            # Пол (в файле столбец K, индекс 10)
             gender_raw = str(row[10]).strip().upper() if row[10] else "М"
             gender = "Ж" if gender_raw in ["Ж", "ЖЕН"] else "М"
 
-            # Создаем спортсмена
-            athlete = Athlete.objects.create(
+            # Создаем спортсмена (get_or_create защитит от дублей)
+            athlete, created = Athlete.objects.get_or_create(
                 competition=comp,
                 full_name=full_name,
-                birth_date=birth_date,
-                rank=rank,
-                region=region,
-                organization=organization,
-                coach=coach
+                defaults={
+                    'birth_date': birth_date,
+                    'rank': rank,
+                    'region': region,
+                    'organization': organization,
+                    'coach': coach
+                }
             )
             
-            # Определяем возрастную категорию (упрощенно по году рождения)
+            # Определяем возрастную категорию
             category = "2008 и ст."
             if birth_date:
                 year = birth_date.year
                 if year in [2009, 2010]: category = "2009-2010"
                 elif year in [2011, 2012]: category = "2011-2012"
 
-            # Проходим по всем возможным видам
-            for col_idx, event_name in events_map.items():
+            # 3. Ищем заполненные ячейки с результатами
+            for col_idx, event_name in event_columns.items():
                 if col_idx < len(row) and row[col_idx]:
                     declared_val = str(row[col_idx]).strip()
                     
-                    # Ищем подходящий вид в базе (по названию, полу и категории)
-                    event_obj = Event.objects.filter(
-                        competition=comp,
-                        name__icontains=event_name,
-                        gender__iexact=gender,
-                        category__icontains=category
-                    ).first()
+                    # Определяем, беговой это вид или технический
+                    is_run = any(x in event_name.lower() for x in ['бег', 'метр', '100', '200', '400', '800', '1500', '3000', 'с/б'])
                     
-                    # Если вида нет - создаем его
-                    if not event_obj:
-                        is_run = event_name.startswith('Бег')
-                        event_obj = Event.objects.create(
-                            competition=comp,
-                            name=event_name,
-                            gender=gender,
-                            category=category,
-                            is_technical=not is_run,
-                            is_running=is_run
-                        )
+                    # Ищем вид в базе (или создаем)
+                    event_obj, e_created = Event.objects.get_or_create(
+                        competition=comp,
+                        name=event_name,
+                        gender=gender,
+                        category=category,
+                        defaults={
+                            'is_technical': not is_run,
+                            'is_running': is_run
+                        }
+                    )
                     
                     # Создаем результат с заявленным значением
-                    Result.objects.create(
+                    Result.objects.update_or_create(
                         event=event_obj,
                         athlete=athlete,
-                        declared_result=declared_val
+                        defaults={'declared_result': declared_val}
                     )
             
             created_count += 1
