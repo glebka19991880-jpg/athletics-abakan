@@ -9,56 +9,79 @@
         {% if data.results %}
         <table>
             <thead>
-                <tr>
-                    <th width="60">Место</th>
-                    <th style="text-align: left;">Спортсмен / Организация</th>
-                    <th width="60">Год</th>
-                    <th>Попытка 1</th>
-                    <th>Попытка 2</th>
-                    <th>Попытка 3</th>
-                    <th>Попытка 4</th>
-                    <th>Попытка 5</th>
-                    <th>Попытка 6</th>
-                    <th width="110">Результат</th>
-                </tr>
+                {% if data.event.is_running %}
+                    <tr>
+                        <th width="60">Место</th>
+                        <th style="text-align: left;">Спортсмен / Организация</th>
+                        <th width="60">Год</th>
+                        <th>Время</th>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <th width="60">Место</th>
+                        <th style="text-align: left;">Спортсмен / Организация</th>
+                        <th width="60">Год</th>
+                        <th>Попытка 1</th>
+                        <th>Попытка 2</th>
+                        <th>Попытка 3</th>
+                        <th>Попытка 4</th>
+                        <th>Попытка 5</th>
+                        <th>Попытка 6</th>
+                        <th width="110">Результат</th>
+                    </tr>
+                {% endif %}
             </thead>
             <tbody>
                 {% for res in data.results %}
                 <tr>
-                    <!-- Место (красивый градиентный кружок) -->
-                    {% if res.final_result and res.final_result != 0.0 %}
-                        <td class="{% if forloop.counter == 1 %}place-1{% elif forloop.counter == 2 %}place-2{% elif forloop.counter == 3 %}place-3{% endif %}">
-                            <span class="place-badge">{{ forloop.counter }}</span>
+                    {% if data.event.is_running %}
+                        {% if res.time_result %}
+                            <td class="{% if forloop.counter == 1 %}place-1{% elif forloop.counter == 2 %}place-2{% elif forloop.counter == 3 %}place-3{% endif %}">
+                                <span class="place-badge">{{ forloop.counter }}</span>
+                            </td>
+                        {% else %}
+                            <td><span class="place-empty">—</span></td>
+                        {% endif %}
+                        <td class="athlete-name">
+                            {{ res.athlete_name }}
+                            {% if res.organization %}
+                                <span class="athlete-org">{{ res.organization }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ res.birth_year }}</td>
+                        <td>
+                            {% if res.time_result %}
+                                <span class="result-best">{{ res.time_result }} с</span>
+                            {% else %}—{% endif %}
                         </td>
                     {% else %}
-                        <td><span class="place-empty">—</span></td>
-                    {% endif %}
-
-                    <!-- ФИО и Организация -->
-                    <td class="athlete-name">
-                        {{ res.athlete_name }}
-                        {% if res.organization %}
-                            <span class="athlete-org">{{ res.organization }}</span>
-                        {% endif %}
-                    </td>
-                    
-                    <td>{{ res.birth_year }}</td>
-                    
-                    <!-- Попытки -->
-                    {% for att in res.attempts %}
-                        <td>
-                            {% if att and att > 0 %}{{ att|floatformat:"-2" }}
-                            {% elif att == -1 %}<span class="attempt-fail">X</span>
-                            {% else %}<span class="attempt-empty">—</span>{% endif %}
-                        </td>
-                    {% endfor %}
-                    
-                    <!-- Лучший результат -->
-                    <td>
                         {% if res.final_result and res.final_result != 0.0 %}
-                            <span class="result-best">{{ res.final_result|floatformat:"-2" }}</span>
-                        {% else %}—{% endif %}
-                    </td>
+                            <td class="{% if forloop.counter == 1 %}place-1{% elif forloop.counter == 2 %}place-2{% elif forloop.counter == 3 %}place-3{% endif %}">
+                                <span class="place-badge">{{ forloop.counter }}</span>
+                            </td>
+                        {% else %}
+                            <td><span class="place-empty">—</span></td>
+                        {% endif %}
+                        <td class="athlete-name">
+                            {{ res.athlete_name }}
+                            {% if res.organization %}
+                                <span class="athlete-org">{{ res.organization }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ res.birth_year }}</td>
+                        {% for att in res.attempts %}
+                            <td>
+                                {% if att and att > 0 %}{{ att|floatformat:"-2" }}
+                                {% elif att == -1 %}<span class="attempt-fail">X</span>
+                                {% else %}<span class="attempt-empty">—</span>{% endif %}
+                            </td>
+                        {% endfor %}
+                        <td>
+                            {% if res.final_result and res.final_result != 0.0 %}
+                                <span class="result-best">{{ res.final_result|floatformat:"-2" }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
