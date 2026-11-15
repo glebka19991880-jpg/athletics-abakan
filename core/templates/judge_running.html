@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Ввод результатов (Бег)</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+        .card { background: white; padding: 20px; border-radius: 8px; max-width: 800px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        select, input[type="text"] { padding: 10px; margin: 5px 0; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #218838; }
+        label { font-weight: bold; display: block; margin-top: 15px; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+        .btn-download { display: inline-block; padding: 8px 15px; text-decoration: none; border-radius: 5px; color: white; font-size: 14px; background-color: #007bff; margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Ввод результатов (Беговые виды)</h1>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="success">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="get">
+            <input type="hidden" name="token" value="{{ token }}">
+            <label>Выберите вид:</label>
+            <select name="event" onchange="this.form.submit()">
+                {% for e in events %}
+                    <option value="{{ e.id }}" {% if current_event.id == e.id %}selected{% endif %}>{{ e.name }} ({{ e.gender }})</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        {% if current_event %}
+            <div style="text-align: right; margin-top: 15px; margin-bottom: 10px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
+                <strong>Скачать протокол:</strong>
+                <a href="{% url 'export_running' current_event.id %}?token={{ token }}" class="btn-download">Excel</a>
+            </div>
+            <hr>
+            
+            <form method="POST" id="resultForm" action="">
+                {% csrf_token %}
+                <input type="hidden" name="event_id" value="{{ current_event.id }}">
+                <input type="hidden" name="token" value="{{ token }}">
+                
+                <label>Выберите участника:</label>
+                <select name="athlete_id" required onchange="changeAthlete(this.value)" style="width: 100%; padding: 8px; margin-bottom: 20px;">
+                    <option value="">--- Выберите спортсмена ---</option>
+                    {% for a in athletes %}
+                        <option value="{{ a.id }}" {% if selected_athlete_id == a.id %}selected{% endif %}>
+                            {{ a.full_name|default:a }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <label>Время (в секундах, например 12.54):</label>
+                <input type="text" name="time_result" placeholder="Время" value="{{ existing_result.time_result|default_if_none:'' }}" style="font-size: 20px; text-align: center;">
+                
+                {% if existing_result and existing_result.time_result %}
+                    <div style="background-color: #e3f2fd; padding: 10px; border-radius: 5px; margin-top: 15px; margin-bottom: 15px;">
+                        <strong>Текущее время:</strong> {{ existing_result.time_result }} сек.
+                    </div>
+                {% endif %}
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" name="save_only" style="background: #3182ce; flex: 1;">Сохранить</button>
+                    <button type="submit" name="next_athlete" style="background: #38a169; flex: 2;">Сохранить и Следующий ➔</button>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+
+    <script>
+        function changeAthlete(athleteId) {
+            const eventId = "{{ current_event.id }}";
+            const token = "{{ token }}";
+            if (athleteId) {
+                window.location.href = `/judge/run/?token=${token}&event=${eventId}&athlete_id=${athleteId}`;
+            }
+        }
+    </script>
+</body>
+</html>
