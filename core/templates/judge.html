@@ -33,11 +33,12 @@
             {% endfor %}
         {% endif %}
 
-        <!-- Форма 1: Выбор соревнования -->
+        <!-- Форма 1: Выбор соревнования (если нужно переключаться между видами по одному токену) -->
+        <!-- Если токен привязан к одному виду, этот блок можно скрыть -->
         <form method="get">
+            <input type="hidden" name="token" value="{{ token }}">
             <label>Выберите вид:</label>
             <select name="event" onchange="this.form.submit()">
-                <option value="">--- Выберите вид ---</option>
                 {% for e in events %}
                     <option value="{{ e.id }}" {% if current_event.id == e.id %}selected{% endif %}>{{ e.name }} ({{ e.gender }})</option>
                 {% endfor %}
@@ -48,16 +49,16 @@
             <!-- Блок со ссылками на скачивание -->
             <div style="text-align: right; margin-top: 15px; margin-bottom: 10px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
                 <strong>Скачать протокол:</strong>
-                <a href="{% url 'export_long_jump' current_event.id %}?discipline={{ current_event.name|lower }}&gender=м" class="btn-download btn-m">Мужчины</a>
-                <a href="{% url 'export_long_jump' current_event.id %}?discipline={{ current_event.name|lower }}&gender=ж" class="btn-download btn-ж">Женщины</a>
+                <a href="{% url 'export_long_jump' current_event.id %}?discipline={{ current_event.name|lower }}&gender=м&token={{ token }}" class="btn-download btn-m">Мужчины</a>
+                <a href="{% url 'export_long_jump' current_event.id %}?discipline={{ current_event.name|lower }}&gender=ж&token={{ token }}" class="btn-download btn-ж">Женщины</a>
             </div>
             <hr>
             
             <!-- Форма 2: Сохранение результатов -->
-            <!-- ВАЖНО: Мы используем GET для выбора спортсмена, поэтому onchange вызывает JS-функцию -->
             <form method="POST" id="resultForm" action="">
                 {% csrf_token %}
                 <input type="hidden" name="event_id" value="{{ current_event.id }}">
+                <input type="hidden" name="token" value="{{ token }}">
                 
                 <label>Выберите участника:</label>
                 <select name="athlete_id" required onchange="changeAthlete(this.value)" style="width: 100%; padding: 8px; margin-bottom: 20px;">
@@ -76,11 +77,11 @@
                     <button type="button" onclick="startTimer()">Старт</button>
                 </div>
 
-                <label>Попытки (1-6) и Ветер <span style="font-weight: normal; color: #666; font-size: 13px;">(неудачная попытка - введите X)</span>:</label>
+                <label>Попытки (1-6): <span style="font-weight: normal; color: #666; font-size: 13px;">(неудачная попытка - введите X)</span>:</label>
                 <div class="attempts">
                     {% for i in "123456" %}
                     <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <!-- Поле для РЕЗУЛЬТАТА -->
+                        <!-- Поле для РЕЗУЛЬТАТА (ветер пока не сохраняем в БД) -->
                         <input type="text" name="attempt_{{ i }}" placeholder="Рез-т {{ i }}"
                             {% if existing_result %}
                                 {% if i == '1' %}value="{{ existing_result.attempt_1|default_if_none:'' }}"
@@ -92,28 +93,10 @@
                                 {% endif %}
                             {% endif %}
                         >
-                        <!-- Поле для ВЕТРА -->
-                        <input type="text" name="wind_{{ i }}" placeholder="Ветер {{ i }}"
-                            {% if existing_result %}
-                                {% if i == '1' %}value="{{ existing_result.wind_1|default_if_none:'' }}"
-                                {% elif i == '2' %}value="{{ existing_result.wind_2|default_if_none:'' }}"
-                                {% elif i == '3' %}value="{{ existing_result.wind_3|default_if_none:'' }}"
-                                {% elif i == '4' %}value="{{ existing_result.wind_4|default_if_none:'' }}"
-                                {% elif i == '5' %}value="{{ existing_result.wind_5|default_if_none:'' }}"
-                                {% elif i == '6' %}value="{{ existing_result.wind_6|default_if_none:'' }}"
-                                {% endif %}
-                            {% endif %}
-                        >
+                        <!-- Поле для ВЕТРА (пока не работает, но пусть будет в интерфейсе) -->
+                        <input type="text" name="wind_{{ i }}" placeholder="Ветер {{ i }}">
                     </div>
                     {% endfor %}
-                </div>
-
-                <!-- Галочка рекорда -->
-                <div style="margin-bottom: 15px;">
-                    <label style="display: inline-block; font-weight: normal; cursor: pointer; margin-top: 0;">
-                        <input type="checkbox" name="is_record" {% if existing_result and existing_result.is_record %}checked{% endif %}> 
-                        <strong>Установлен рекорд</strong> (будет отмечено звездочкой в протоколе)
-                    </label>
                 </div>
                 
                 {% if existing_result %}
@@ -129,12 +112,12 @@
 
     <!-- Скрипты -->
     <script>
-        // Скрипт для подгрузки данных спортсмена (вызывается при выборе из списка)
+        // Передаем токен, чтобы при смене спортсмена судью не выкинуло
         function changeAthlete(athleteId) {
             const eventId = "{{ current_event.id }}";
+            const token = "{{ token }}";
             if (athleteId) {
-                // Делаем GET-запрос, чтобы подтянуть старые результаты
-                window.location.href = `/judge/?event=${eventId}&athlete_id=${athleteId}`;
+                window.location.href = `/judge/?token=${token}&event=${eventId}&athlete_id=${athleteId}`;
             }
         }
 
