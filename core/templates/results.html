@@ -12,10 +12,13 @@
         .container { max-width: 1000px; margin: 0 auto; }
         h1 { text-align: center; color: #1a365d; margin-bottom: 30px; }
         
-        /* Фильтр */
-        .filter-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; }
-        .filter-box select { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; }
-        .filter-box button { padding: 8px 15px; background: #3182ce; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-left: 10px; }
+        /* Фильтры */
+        .filter-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; align-items: flex-start; }
+        .filter-group label { font-size: 14px; color: #4a5568; margin-bottom: 5px; font-weight: bold; }
+        .filter-box select { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; min-width: 150px; }
+        .filter-box button { padding: 8px 15px; background: #3182ce; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; height: 42px; margin-top: auto; }
+        .filter-box a { text-decoration: none; color: #e53e3e; font-size: 14px; line-height: 42px; margin-top: auto; }
         
         /* Аккордеон */
         .event-block { background: white; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; }
@@ -45,17 +48,32 @@
     <div class="container">
         <h1>Результаты соревнований</h1>
 
-        <!-- Фильтр по году рождения -->
+        <!-- Фильтры -->
         <div class="filter-box">
-            <form method="get">
-                <label for="year">Фильтр по году рождения:</label>
-                <select name="year" id="year">
-                    <option value="">Все годы</option>
-                    {% for y in years %}
-                        <option value="{{ y }}" {% if selected_year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
-                    {% endfor %}
-                </select>
+            <form method="get" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; justify-content: center;">
+                
+                <div class="filter-group">
+                    <label for="gender">Пол:</label>
+                    <select name="gender" id="gender">
+                        <option value="">Все</option>
+                        {% for g in genders %}
+                            <option value="{{ g }}" {% if selected_gender == g %}selected{% endif %}>{{ g }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="category">Возрастная категория:</label>
+                    <select name="category" id="category">
+                        <option value="">Все</option>
+                        {% for c in categories %}
+                            <option value="{{ c }}" {% if selected_category == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
                 <button type="submit">Применить</button>
+                <a href="{% url 'spectator_results' %}">Сбросить</a>
             </form>
         </div>
 
@@ -87,14 +105,12 @@
                     <tbody>
                         {% for res in data.results %}
                         <tr>
-                            <!-- Место (считаем по порядку, так как они уже отсортированы) -->
                             <td class="{% if forloop.counter == 1 %}place-1{% elif forloop.counter == 2 %}place-2{% elif forloop.counter == 3 %}place-3{% endif %}">
                                 {{ forloop.counter }}
                             </td>
                             <td style="text-align: left;">{{ res.athlete_name }}</td>
                             <td>{{ res.birth_year }}</td>
                             
-                            <!-- Попытки (выводим прочерк, если пусто или 0) -->
                             {% for att in res.attempts %}
                                 <td>
                                     {% if att and att > 0 %}{{ att|floatformat:"-2" }}
@@ -103,7 +119,6 @@
                                 </td>
                             {% endfor %}
                             
-                            <!-- Лучший результат -->
                             <td class="result-best">
                                 {% if res.final_result and res.final_result > 0 %}
                                     {{ res.final_result|floatformat:"-2" }}
@@ -119,19 +134,15 @@
             </div>
         </div>
         {% empty %}
-            <p style="text-align: center;">Соревнования пока не добавлены.</p>
+            <p style="text-align: center;">По вашему запросу видов спорта не найдено.</p>
         {% endfor %}
     </div>
 
-    <!-- Скрипт для работы аккордеона (открытие/закрытие) -->
+    <!-- Скрипт для работы аккордеона -->
     <script>
         function toggleEvent(element) {
-            // Находим контент, который идет сразу после заголовка
             const content = element.nextElementSibling;
-            // Переключаем класс active
             content.classList.toggle('active');
-            
-            // Меняем стрелочку
             const arrow = element.querySelector('span:last-child');
             if (content.classList.contains('active')) {
                 arrow.textContent = '▲';
