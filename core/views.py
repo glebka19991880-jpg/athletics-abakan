@@ -57,10 +57,11 @@ def judge_input(request):
             except ValueError:
                 return 0.0
 
-        # Получаем или создаем результат
+        # ИСПРАВЛЕНИЕ: Добавили defaults, чтобы база не падала при создании новой записи
         result, created = Result.objects.get_or_create(
             event_id=current_event.id,
-            athlete_id=athlete_id
+            athlete_id=athlete_id,
+            defaults={'final_result': 0.0}
         )
 
         # Обновляем ТОЛЬКО те попытки, которые ввел судья
