@@ -38,7 +38,6 @@ def judge_input(request):
     current_event = api_key.event
     events = Event.objects.filter(id=current_event.id)
     
-    # Берем только тех, кто заявлен в этом виде
     results_qs = Result.objects.filter(event=current_event).select_related('athlete')
     athletes = [r.athlete for r in results_qs]
 
@@ -447,3 +446,21 @@ def spectator_results_ajax(request):
         events_data.append({'event': event, 'results': results_list})
 
     return render(request, 'results_partial.html', {'events_data': events_data})
+
+
+# --- НОВАЯ ФУНКЦИЯ ДЛЯ СОЗДАНИЯ АДМИНА ---
+def create_admin(request):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
+    user, created = User.objects.get_or_create(username='admin')
+    user.set_password('Abakan2026!')
+    user.is_superuser = True
+    user.is_staff = True
+    user.is_active = True
+    user.save()
+    
+    if created:
+        return HttpResponse("Администратор успешно создан! Теперь можете зайти в /admin/ (Логин: admin, Пароль: Abakan2026!)")
+    else:
+        return HttpResponse("Администратор уже существует. Пароль сброшен на Abakan2026!")
