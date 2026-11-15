@@ -8,13 +8,15 @@ SECRET_KEY = 'django-insecure-abakan-2026'
 DEBUG = True
 ALLOWED_HOSTS = ['*']
 
+# НОВАЯ БАЗА ДАННЫХ (Postgres-bl_3)
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://postgres:xkrYKUvRVtvAkoxKHKJdqneoLyPnwKgD@postgres-z0ui.railway.internal:5432/railway',
-        # ВАЖНО: Отключаем серверные курсоры для работы через пулер Railway
-        DISABLE_SERVER_SIDE_CURSORS=True
+        default='postgresql://postgres:SSPDybBJlvpuWqfIauhqpGydtBOIKhzZ@postgres-bl3.railway.internal:5432/railway'
     )
 }
+
+# ВАЖНО: Отключаем серверные курсоры для работы через пулер Railway (PgBouncer)
+DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
