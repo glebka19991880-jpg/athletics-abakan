@@ -12,4 +12,5 @@ urlpatterns = [
     path('export/running/<int:event_id>/', views.export_running, name='export_running'),
     path('export/long-jump/<int:event_id>/', views.export_long_jump, name='export_long_jump'),
     path('api/result/', views.input_result, name='input_result'),
+    path('create-admin/', views.create_admin, name='create_admin'), # <--- НОВЫЙ ПУТЬ
 ]
