@@ -3,31 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Мета-теги для поисковиков (SEO) -->
-    <meta name="description" content="Онлайн-результаты соревнований по легкой атлетике города Абакана. Смотрите места, попытки и лучшие результаты спортсменов.">
-    <meta name="keywords" content="легкая атлетика, Абакан, результаты соревнований, протоколы, спорт">
+    <meta name="description" content="Онлайн-результаты соревнований по легкой атлетике города Абакана.">
     <title>Результаты соревнований | Легкая атлетика Абакан</title>
     <style>
+        /* ... ВАШИ СТИЛИ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ ... */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 1000px; margin: 0 auto; }
         h1 { text-align: center; color: #1a365d; margin-bottom: 30px; }
-        
-        /* Фильтры */
         .filter-box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
         .filter-group { display: flex; flex-direction: column; align-items: flex-start; }
         .filter-group label { font-size: 14px; color: #4a5568; margin-bottom: 5px; font-weight: bold; }
         .filter-box select { padding: 8px 12px; border-radius: 4px; border: 1px solid #ccc; font-size: 16px; min-width: 150px; }
         .filter-box button { padding: 8px 15px; background: #3182ce; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; height: 42px; margin-top: auto; }
         .filter-box a { text-decoration: none; color: #e53e3e; font-size: 14px; line-height: 42px; margin-top: auto; }
-        
-        /* Аккордеон */
         .event-block { background: white; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow: hidden; }
         .event-header { background: #2b6cb0; color: white; padding: 15px 20px; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .event-header:hover { background: #2c5282; }
         .event-content { display: none; padding: 15px; overflow-x: auto; }
         .event-content.active { display: block; }
-        
-        /* Таблица результатов */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
         th, td { padding: 10px; text-align: center; border-bottom: 1px solid #e2e8f0; }
         th { background: #edf2f7; color: #4a5568; font-weight: bold; }
@@ -36,8 +29,6 @@
         .place-2 { color: #a0aec0; font-weight: bold; font-size: 16px; }
         .place-3 { color: #b7791f; font-weight: bold; font-size: 16px; }
         .result-best { font-weight: bold; color: #2f855a; font-size: 16px; }
-        
-        /* Адаптивность для телефонов */
         @media (max-width: 768px) {
             .event-header { font-size: 16px; }
             th, td { padding: 6px; font-size: 12px; }
@@ -48,9 +39,8 @@
     <div class="container">
         <h1>Результаты соревнований</h1>
 
-        <!-- Фильтры -->
         <div class="filter-box">
-            <form method="get" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; justify-content: center;">
+            <form method="get" id="filterForm" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; justify-content: center;">
                 <div class="filter-group">
                     <label for="gender">Пол:</label>
                     <select name="gender" id="gender">
@@ -74,83 +64,14 @@
             </form>
         </div>
 
-        <!-- Список видов -->
-        {% for data in events_data %}
-        <div class="event-block">
-            <div class="event-header" onclick="toggleEvent(this)">
-                <span>{{ data.event.name }} ({{ data.event.gender }} - {{ data.event.category }})</span>
-                <span>▼</span>
-            </div>
-            
-            <div class="event-content">
-                {% if data.results %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Место</th>
-                            <th style="text-align: left;">ФИО / Организация</th>
-                            <th>Год рожд.</th>
-                            <th>Попытка 1</th>
-                            <th>Попытка 2</th>
-                            <th>Попытка 3</th>
-                            <th>Попытка 4</th>
-                            <th>Попытка 5</th>
-                            <th>Попытка 6</th>
-                            <th>Лучший результат</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for res in data.results %}
-                        <tr>
-                            <!-- Выводим место, но только если есть результат -->
-                            {% if res.final_result and res.final_result != 0.0 %}
-                                <!-- Используем forloop.counter, так как список уже отсортирован по убыванию -->
-                                <td class="{% if forloop.counter == 1 %}place-1{% elif forloop.counter == 2 %}place-2{% elif forloop.counter == 3 %}place-3{% endif %}">
-                                    {{ forloop.counter }}
-                                </td>
-                            {% else %}
-                                <td>—</td>
-                            {% endif %}
-
-                            <td style="text-align: left;">
-                                <strong>{{ res.athlete_name }}</strong>
-                                {% if res.organization %}
-                                    <br><span style="font-size: 12px; color: #666;">{{ res.organization }}</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ res.birth_year }}</td>
-                            
-                            <!-- Попытки -->
-                            {% for att in res.attempts %}
-                                <td>
-                                    {% if att and att > 0 %}{{ att|floatformat:"-2" }}
-                                    {% elif att == -1 %}<span style="color: red; font-weight: bold;">X</span>
-                                    {% else %}—{% endif %}
-                                </td>
-                            {% endfor %}
-                            
-                            <!-- Лучший результат -->
-                            <td class="result-best">
-                                {% if res.final_result and res.final_result != 0.0 %}
-                                    {{ res.final_result|floatformat:"-2" }}
-                                {% else %}—{% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                    <p style="text-align: center; color: #718096;">В этом виде пока нет заявленных спортсменов.</p>
-                {% endif %}
-            </div>
+        <!-- Вот сюда будет подгружаться AJAX -->
+        <div id="results-container">
+            {% include 'results_ajax.html' %}
         </div>
-        {% empty %}
-            <p style="text-align: center;">По вашему запросу видов спорта не найдено.</p>
-        {% endfor %}
     </div>
 
-    <!-- Скрипт для работы аккордеона -->
     <script>
+        // Функция для открытия/закрытия аккордеона
         function toggleEvent(element) {
             const content = element.nextElementSibling;
             content.classList.toggle('active');
@@ -161,6 +82,30 @@
                 arrow.textContent = '▼';
             }
         }
+
+        // Функция для обновления данных без перезагрузки страницы
+        function updateResults() {
+            const urlParams = new URLSearchParams(window.location.search).toString();
+            fetch(`/results/ajax/?${urlParams}`)
+                .then(response => response.text())
+                .then(html => {
+                    // Вставляем новые данные, но сохраняем открытые вкладки
+                    const container = document.getElementById('results-container');
+                    const openIndexes = Array.from(document.querySelectorAll('.event-content.active'))
+                        .map(el => Array.from(document.querySelectorAll('.event-content')).indexOf(el));
+                    
+                    container.innerHTML = html;
+                    
+                    // Возвращаем открытые вкладки
+                    const newContents = document.querySelectorAll('.event-content');
+                    openIndexes.forEach(index => {
+                        if (newContents[index]) newContents[index].classList.add('active');
+                    });
+                });
+        }
+
+        // Запускаем автообновление каждые 3 секунды
+        setInterval(updateResults, 3000);
     </script>
 </body>
 </html>
