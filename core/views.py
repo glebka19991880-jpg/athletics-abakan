@@ -208,7 +208,7 @@ def export_long_jump(request, event_id):
     return response
 
 
-# --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗРИТЕЛЕЙ ---
+# --- ФУНКЦИЯ ДЛЯ ЗРИТЕЛЕЙ С ПОЛНЫМ СПИСКОМ И БЕЗОПАСНОЙ СОРТИРОВКОЙ ---
 def spectator_results(request):
     events = Event.objects.all().order_by('name')
     
@@ -226,18 +226,17 @@ def spectator_results(request):
 
     events_data = []
     for event in events:
-        # Берем ВСЕХ спортсменов, которые заявлены в этом соревновании (competition)
         if not event.competition:
             continue
             
+        # Берем ВСЕХ спортсменов, которые заявлены в этом соревновании
         all_athletes = Athlete.objects.filter(competition=event.competition)
         
         results_list = []
         for athlete in all_athletes:
-            # Ищем результат этого спортсмена в этом виде
+            # Ищем результат конкретного спортсмена в этом виде
             r = Result.objects.filter(event=event, athlete=athlete).first()
             
-            # Если результат есть, берем данные из него, если нет - ставим пустоту
             if r:
                 attempts = [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6]
                 final_res = r.final_result
@@ -253,8 +252,17 @@ def spectator_results(request):
                 'final_result': final_res,
             })
         
-        # Сортируем список: сначала те, у кого есть результат (по убыванию), потом остальные
-        results_list.sort(key=lambda x: x['final_result'] if x['final_result'] else -1, reverse=True)
+        # Безопасная сортировка (превращаем None в -1.0, чтобы не было ошибки типов)
+        def get_sort_key(item):
+            res = item['final_result']
+            if res is None:
+                return -1.0
+            try:
+                return float(res)
+            except (ValueError, TypeError):
+                return -1.0
+
+        results_list.sort(key=get_sort_key, reverse=True)
             
         events_data.append({
             'event': event,
