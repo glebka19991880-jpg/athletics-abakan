@@ -18,9 +18,10 @@
         .btn-m { background-color: #007bff; }
         .btn-ж { background-color: #dc3545; }
         
-        /* Стили для таймера */
         .timer-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 5px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .timer-box button { background: #ffc107; color: black; padding: 5px 15px; font-size: 14px; }
+        
+        .declared-box { background: #e3f2fd; border-left: 5px solid #2196f3; padding: 10px; border-radius: 5px; margin-bottom: 15px; font-size: 15px; }
     </style>
 </head>
 <body>
@@ -33,7 +34,6 @@
             {% endfor %}
         {% endif %}
 
-        <!-- Форма 1: Выбор вида -->
         <form method="get">
             <input type="hidden" name="token" value="{{ token }}">
             <label>Выберите вид:</label>
@@ -45,7 +45,6 @@
         </form>
 
         {% if current_event %}
-            <!-- Ссылки на скачивание -->
             <div style="text-align: right; margin-top: 15px; margin-bottom: 10px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
                 <strong>Скачать протокол:</strong>
                 <a href="{% url 'export_long_jump' current_event.id %}?discipline={{ current_event.name|lower }}&gender=м&token={{ token }}" class="btn-download btn-m">Мужчины</a>
@@ -53,7 +52,6 @@
             </div>
             <hr>
             
-            <!-- Форма 2: Сохранение результатов -->
             <form method="POST" id="resultForm" action="">
                 {% csrf_token %}
                 <input type="hidden" name="event_id" value="{{ current_event.id }}">
@@ -69,7 +67,13 @@
                     {% endfor %}
                 </select>
 
-                <!-- Таймер попытки -->
+                <!-- ЗАЯВЛЕННЫЙ РЕЗУЛЬТАТ -->
+                {% if existing_result and existing_result.declared_result %}
+                    <div class="declared-box">
+                        <strong>Заявленный результат:</strong> {{ existing_result.declared_result }}
+                    </div>
+                {% endif %}
+
                 <div class="timer-box">
                     <span><strong>Время на попытку:</strong></span>
                     <span id="timer" style="font-size: 24px; font-weight: bold; color: #856404;">01:00</span>
@@ -102,7 +106,6 @@
                     </div>
                 {% endif %}
                 
-                <!-- Кнопки сохранения -->
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit" name="save_only" style="background: #3182ce; flex: 1;">Сохранить</button>
                     <button type="submit" name="next_athlete" style="background: #38a169; flex: 2;">Сохранить и Следующий ➔</button>
