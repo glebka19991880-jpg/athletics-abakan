@@ -57,7 +57,6 @@ def judge_input(request):
             except ValueError:
                 return 0.0
 
-        # ИСПРАВЛЕНИЕ: Передаем пустые значения для всех полей при создании
         result, created = Result.objects.get_or_create(
             event_id=current_event.id,
             athlete_id=athlete_id,
@@ -68,13 +67,11 @@ def judge_input(request):
             }
         )
 
-        # Обновляем ТОЛЬКО те попытки, которые ввел судья
         for i in range(1, 7):
             val = request.POST.get(f'attempt_{i}')
             if val is not None and str(val).strip() != '':
                 setattr(result, f'attempt_{i}', parse_float(val))
 
-        # Пересчитываем лучший результат
         attempts = [result.attempt_1, result.attempt_2, result.attempt_3, result.attempt_4, result.attempt_5, result.attempt_6]
         valid_attempts = [a for a in attempts if a and a > 0]
         result.final_result = max(valid_attempts) if valid_attempts else 0.0
@@ -82,7 +79,6 @@ def judge_input(request):
 
         messages.success(request, 'Результат сохранен!')
 
-        # Если нажата кнопка "Сохранить и Следующий"
         if 'next_athlete' in request.POST:
             current_index = next((i for i, a in enumerate(athletes) if str(a.id) == str(athlete_id)), -1)
             if current_index != -1 and current_index + 1 < len(athletes):
@@ -233,7 +229,6 @@ def export_long_jump(request, event_id):
     return response
 
 
-# --- ФУНКЦИИ ДЛЯ ЗРИТЕЛЕЙ ---
 def spectator_results(request):
     events = Event.objects.all().order_by('name')
     
@@ -302,7 +297,7 @@ def spectator_results(request):
     }
     return render(request, 'results.html', context)
 
-# НОВАЯ ФУНКЦИЯ ДЛЯ AJAX
+
 def spectator_results_ajax(request):
     events = Event.objects.all().order_by('name')
     selected_gender = request.GET.get('gender')
@@ -341,5 +336,5 @@ def spectator_results_ajax(request):
         results_list.sort(key=get_sort_key, reverse=True)
         events_data.append({'event': event, 'results': results_list})
 
-    # Возвращаем только кусок HTML для обновления
-    return render(request, 'results_ajax.html', {'events_data': events_data})
+    # ИСПРАВЛЕНО: рендерим results_partial.html
+    return render(request, 'results_partial.html', {'events_data': events_data})
