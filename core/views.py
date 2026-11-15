@@ -110,6 +110,72 @@ def judge_input(request):
     return render(request, 'judge.html', context)
 
 
+def judge_running(request):
+    token = request.GET.get('token')
+    if not token:
+        return HttpResponse("Доступ запрещен. В ссылке отсутствует параметр ?token=...", status=403)
+    
+    try:
+        api_key = ApiKey.objects.get(key=token, is_active=True)
+    except ApiKey.DoesNotExist:
+        return HttpResponse("Доступ запрещен. Неверный или неактивный API-ключ.", status=403)
+
+    current_event = api_key.event
+    events = Event.objects.filter(id=current_event.id)
+    athletes = list(Athlete.objects.filter(competition=current_event.competition).order_by('full_name'))
+
+    if request.method == "POST":
+        event_id = request.POST.get('event_id')
+        if str(current_event.id) != str(event_id):
+            return HttpResponse("Ошибка: вы пытаетесь сохранить результат в чужое соревнование.", status=403)
+
+        athlete_id = request.POST.get('athlete_id')
+        time_str = request.POST.get('time_result', '').replace(',', '.')
+        
+        try:
+            time_val = float(time_str) if time_str else None
+        except ValueError:
+            time_val = None
+
+        result, created = Result.objects.get_or_create(
+            event_id=current_event.id,
+            athlete_id=athlete_id,
+            defaults={'final_result': 0.0, 'assigned_rank': '', 'place': None}
+        )
+        
+        result.time_result = time_val
+        result.save()
+
+        messages.success(request, 'Время сохранено!')
+
+        if 'next_athlete' in request.POST:
+            current_index = next((i for i, a in enumerate(athletes) if str(a.id) == str(athlete_id)), -1)
+            if current_index != -1 and current_index + 1 < len(athletes):
+                next_id = athletes[current_index + 1].id
+                return redirect(f'/judge/run/?token={token}&event={current_event.id}&athlete_id={next_id}')
+            else:
+                if athletes:
+                    return redirect(f'/judge/run/?token={token}&event={current_event.id}&athlete_id={athletes[0].id}')
+
+        return redirect(f'/judge/run/?token={token}&event={current_event.id}&athlete_id={athlete_id}')
+
+    selected_athlete_id = request.GET.get('athlete_id')
+    existing_result = None
+    
+    if current_event and selected_athlete_id:
+        existing_result = Result.objects.filter(event_id=current_event.id, athlete_id=selected_athlete_id).first()
+
+    context = {
+        'events': events,
+        'athletes': athletes,
+        'current_event': current_event,
+        'selected_athlete_id': int(selected_athlete_id) if selected_athlete_id else None,
+        'existing_result': existing_result, 
+        'token': token,
+    }
+    return render(request, 'judge_running.html', context)
+
+
 @csrf_exempt
 def input_result(request):
     if request.method == "POST":
@@ -129,11 +195,7 @@ def input_result(request):
         result, _ = Result.objects.update_or_create(
             event=event,
             athlete_id=athlete_id,
-            defaults={
-                "final_result": value,
-                "assigned_rank": "",
-                "place": None
-            }
+            defaults={"final_result": value, "assigned_rank": "", "place": None}
         )
         return JsonResponse({"status": "ok", "id": result.id})
     
@@ -167,6 +229,35 @@ def export_excel(request, event_id):
         
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="{event.name}.xlsx"'
+    wb.save(response)
+    return response
+
+
+def export_running(request, event_id):
+    token = request.GET.get('token')
+    if not token:
+        return HttpResponse("Доступ запрещен. Отсутствует API-ключ (token).", status=403)
+    
+    event = Event.objects.get(id=event_id)
+    results = Result.objects.filter(event=event, time_result__isnull=False).order_by('time_result')
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = event.name
+
+    ws.append(["Место", "ФИО", "Год рождения", "Организация", "Время"])
+    
+    for index, res in enumerate(results, start=1):
+        ws.append([
+            index,
+            res.athlete.full_name,
+            res.athlete.birth_date.year if res.athlete.birth_date else "",
+            res.athlete.organization,
+            res.time_result
+        ])
+        
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="protocol_run_{event.name}.xlsx"'
     wb.save(response)
     return response
 
@@ -258,9 +349,11 @@ def spectator_results(request):
             if r:
                 attempts = [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6]
                 final_res = r.final_result
+                time_res = r.time_result # <--- БЕРЕМ ВРЕМЯ
             else:
                 attempts = [None, None, None, None, None, None]
                 final_res = None
+                time_res = None
 
             results_list.append({
                 'athlete_name': athlete.full_name,
@@ -268,18 +361,24 @@ def spectator_results(request):
                 'birth_year': athlete.birth_date.year if athlete.birth_date else '',
                 'attempts': attempts,
                 'final_result': final_res,
+                'time_result': time_res, # <--- ПЕРЕДАЕМ ВРЕМЯ
             })
         
-        def get_sort_key(item):
-            res = item['final_result']
-            if res is None:
-                return -1.0
-            try:
-                return float(res)
-            except (ValueError, TypeError):
-                return -1.0
-
-        results_list.sort(key=get_sort_key, reverse=True)
+        # Сортировка в зависимости от типа вида
+        if event.is_running:
+            def get_sort_key(item):
+                res = item['time_result']
+                if res is None: return 9999.0
+                try: return float(res)
+                except: return 9999.0
+            results_list.sort(key=get_sort_key, reverse=False) # По возрастанию (быстрее = выше)
+        else:
+            def get_sort_key(item):
+                res = item['final_result']
+                if res is None: return -1.0
+                try: return float(res)
+                except: return -1.0
+            results_list.sort(key=get_sort_key, reverse=True) # По убыванию
             
         events_data.append({
             'event': event,
@@ -318,23 +417,35 @@ def spectator_results_ajax(request):
             if r:
                 attempts = [r.attempt_1, r.attempt_2, r.attempt_3, r.attempt_4, r.attempt_5, r.attempt_6]
                 final_res = r.final_result
+                time_res = r.time_result
             else:
                 attempts = [None]*6
                 final_res = None
+                time_res = None
             results_list.append({
                 'athlete_name': athlete.full_name,
                 'organization': athlete.organization or '',
                 'birth_year': athlete.birth_date.year if athlete.birth_date else '',
                 'attempts': attempts,
                 'final_result': final_res,
+                'time_result': time_res,
             })
-        def get_sort_key(item):
-            res = item['final_result']
-            if res is None: return -1.0
-            try: return float(res)
-            except: return -1.0
-        results_list.sort(key=get_sort_key, reverse=True)
+            
+        if event.is_running:
+            def get_sort_key(item):
+                res = item['time_result']
+                if res is None: return 9999.0
+                try: return float(res)
+                except: return 9999.0
+            results_list.sort(key=get_sort_key, reverse=False)
+        else:
+            def get_sort_key(item):
+                res = item['final_result']
+                if res is None: return -1.0
+                try: return float(res)
+                except: return -1.0
+            results_list.sort(key=get_sort_key, reverse=True)
+            
         events_data.append({'event': event, 'results': results_list})
 
-    # ИСПРАВЛЕНО: рендерим results_partial.html
     return render(request, 'results_partial.html', {'events_data': events_data})
