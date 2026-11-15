@@ -33,8 +33,7 @@
             {% endfor %}
         {% endif %}
 
-        <!-- Форма 1: Выбор соревнования (если нужно переключаться между видами по одному токену) -->
-        <!-- Если токен привязан к одному виду, этот блок можно скрыть -->
+        <!-- Форма 1: Выбор вида -->
         <form method="get">
             <input type="hidden" name="token" value="{{ token }}">
             <label>Выберите вид:</label>
@@ -46,7 +45,7 @@
         </form>
 
         {% if current_event %}
-            <!-- Блок со ссылками на скачивание -->
+            <!-- Ссылки на скачивание -->
             <div style="text-align: right; margin-top: 15px; margin-bottom: 10px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
                 <strong>Скачать протокол:</strong>
                 <a href="{% url 'export_long_jump' current_event.id %}?discipline={{ current_event.name|lower }}&gender=м&token={{ token }}" class="btn-download btn-m">Мужчины</a>
@@ -81,7 +80,6 @@
                 <div class="attempts">
                     {% for i in "123456" %}
                     <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <!-- Поле для РЕЗУЛЬТАТА (ветер пока не сохраняем в БД) -->
                         <input type="text" name="attempt_{{ i }}" placeholder="Рез-т {{ i }}"
                             {% if existing_result %}
                                 {% if i == '1' %}value="{{ existing_result.attempt_1|default_if_none:'' }}"
@@ -93,7 +91,6 @@
                                 {% endif %}
                             {% endif %}
                         >
-                        <!-- Поле для ВЕТРА (пока не работает, но пусть будет в интерфейсе) -->
                         <input type="text" name="wind_{{ i }}" placeholder="Ветер {{ i }}">
                     </div>
                     {% endfor %}
@@ -105,14 +102,16 @@
                     </div>
                 {% endif %}
                 
-                <button type="submit">Сохранить результат</button>
+                <!-- Кнопки сохранения -->
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" name="save_only" style="background: #3182ce; flex: 1;">Сохранить</button>
+                    <button type="submit" name="next_athlete" style="background: #38a169; flex: 2;">Сохранить и Следующий ➔</button>
+                </div>
             </form>
         {% endif %}
     </div>
 
-    <!-- Скрипты -->
     <script>
-        // Передаем токен, чтобы при смене спортсмена судью не выкинуло
         function changeAthlete(athleteId) {
             const eventId = "{{ current_event.id }}";
             const token = "{{ token }}";
@@ -121,7 +120,6 @@
             }
         }
 
-        // Скрипт для таймера
         let timerInterval;
         function startTimer() {
             clearInterval(timerInterval);
