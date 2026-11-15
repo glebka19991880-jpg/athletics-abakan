@@ -1,24 +1,22 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Онлайн-результаты соревнований по легкой атлетике города Абакана. Смотрите места, попытки и лучшие результаты спортсменов.">
-    <meta name="keywords" content="легкая атлетика, Абакан, результаты соревнований, протоколы, спорт">
+    <meta name="description" content="Онлайн-результаты соревнований по легкой атлетике города Абакана.">
     <title>Результаты соревнований | Легкая атлетика Абакан</title>
     
-    <!-- Подключаем современный шрифт Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
+            --bg-gradient: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.2);
             --text-main: #1e293b;
             --text-muted: #64748b;
             --border-color: #e2e8f0;
@@ -27,113 +25,142 @@
         }
 
         body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-color); 
+            font-family: 'Montserrat', sans-serif; 
+            background: var(--bg-gradient);
+            background-attachment: fixed;
             margin: 0; 
-            padding: 20px; 
+            padding: 30px 15px; 
             color: var(--text-main);
             -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
         }
         
         .container { max-width: 1100px; margin: 0 auto; }
         
-        h1 { 
-            text-align: center; 
-            color: var(--text-main); 
-            font-weight: 700;
-            margin-bottom: 30px; 
-            font-size: 28px;
+        /* Заголовок с эффектом */
+        .page-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .page-title h1 { 
+            color: white; 
+            font-weight: 800;
+            font-size: 36px;
+            margin: 0 0 10px 0;
+            text-shadow: 0 4px 6px rgba(0,0,0,0.2);
             letter-spacing: -0.5px;
         }
+        .page-title p {
+            color: rgba(255,255,255,0.8);
+            font-size: 16px;
+            margin: 0;
+            font-weight: 500;
+        }
         
-        /* Фильтры */
+        /* Фильтры (Стеклянный эффект) */
         .filter-box { 
-            background: var(--card-bg); 
-            padding: 20px; 
-            border-radius: 12px; 
-            margin-bottom: 25px; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            background: var(--glass-bg); 
+            backdrop-filter: blur(10px);
+            padding: 20px 25px; 
+            border-radius: 16px; 
+            margin-bottom: 30px; 
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             display: flex; 
             justify-content: center; 
             gap: 20px; 
             flex-wrap: wrap; 
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--glass-border);
         }
         .filter-group { display: flex; flex-direction: column; align-items: flex-start; }
         .filter-group label { 
-            font-size: 13px; 
+            font-size: 12px; 
             color: var(--text-muted); 
-            margin-bottom: 6px; 
-            font-weight: 600; 
+            margin-bottom: 8px; 
+            font-weight: 700; 
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
         }
         .filter-box select { 
-            padding: 10px 14px; 
-            border-radius: 8px; 
-            border: 1px solid var(--border-color); 
+            padding: 12px 16px; 
+            border-radius: 10px; 
+            border: 2px solid transparent; 
+            background-color: #f1f5f9;
             font-size: 15px; 
-            min-width: 160px; 
-            background-color: white;
+            min-width: 180px; 
             color: var(--text-main);
+            font-weight: 600;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s;
+            cursor: pointer;
         }
-        .filter-box select:focus { border-color: var(--primary); }
+        .filter-box select:focus { 
+            border-color: var(--primary);
+            background-color: white;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
         .filter-box button { 
-            padding: 10px 20px; 
+            padding: 12px 25px; 
             background: var(--primary); 
             color: white; 
             border: none; 
-            border-radius: 8px; 
+            border-radius: 10px; 
             cursor: pointer; 
             font-size: 15px; 
-            font-weight: 600;
-            height: 42px; 
+            font-weight: 700;
+            height: 48px; 
             margin-top: auto; 
-            transition: background 0.2s;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
-        .filter-box button:hover { background: var(--primary-hover); }
+        .filter-box button:hover { 
+            background: var(--primary-hover); 
+            transform: translateY(-2px);
+        }
         .filter-box a { 
             text-decoration: none; 
             color: var(--danger); 
             font-size: 14px; 
-            font-weight: 500;
-            line-height: 42px; 
+            font-weight: 700;
+            line-height: 48px; 
             margin-top: auto; 
-            transition: opacity 0.2s;
+            transition: all 0.2s;
         }
         .filter-box a:hover { opacity: 0.8; }
         
-        /* Аккордеон */
+        /* Аккордеон (Карточки) */
         .event-block { 
-            background: var(--card-bg); 
-            border-radius: 12px; 
+            background: var(--glass-bg); 
+            border-radius: 16px; 
             margin-bottom: 16px; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--glass-border);
             overflow: hidden; 
-            transition: transform 0.2s;
+            transition: all 0.3s;
         }
+        .event-block:hover { 
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
         .event-header { 
-            background: var(--card-bg); 
+            background: transparent; 
             color: var(--text-main); 
-            padding: 18px 24px; 
-            font-size: 17px; 
-            font-weight: 600; 
+            padding: 20px 25px; 
+            font-size: 18px; 
+            font-weight: 700; 
             cursor: pointer; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            border-left: 5px solid var(--primary);
+            border-left: 6px solid var(--primary);
             transition: background 0.2s;
         }
-        .event-header:hover { background: #f1f5f9; }
+        .event-header:hover { background: rgba(241, 245, 249, 0.5); }
         
         .event-content { 
             display: none; 
             padding: 0; 
             overflow-x: auto; 
+            background: white;
             border-top: 1px solid var(--border-color);
         }
         .event-content.active { display: block; }
@@ -143,98 +170,108 @@
         th { 
             background: #f8fafc; 
             color: var(--text-muted); 
-            font-weight: 600; 
-            padding: 14px 10px; 
+            font-weight: 700; 
+            padding: 16px 12px; 
             text-align: center; 
             border-bottom: 2px solid var(--border-color);
             text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.5px;
+            font-size: 11px;
+            letter-spacing: 1px;
             position: sticky;
             top: 0;
+            z-index: 10;
         }
         td { 
-            padding: 12px 10px; 
+            padding: 14px 12px; 
             text-align: center; 
             border-bottom: 1px solid var(--border-color); 
             color: var(--text-main);
+            font-weight: 500;
         }
         tr:last-child td { border-bottom: none; }
         tr:hover { background: #f8fafc; }
         
         /* Стили для призовых мест */
         .place-badge {
-            display: inline-block;
-            width: 28px;
-            height: 28px;
-            line-height: 28px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            font-weight: bold;
-            font-size: 14px;
+            font-weight: 800;
+            font-size: 15px;
             color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
-        .place-1 .place-badge { background-color: #fbbf24; box-shadow: 0 2px 4px rgba(251, 191, 36, 0.4); } /* Золото */
-        .place-2 .place-badge { background-color: #94a3b8; box-shadow: 0 2px 4px rgba(148, 163, 184, 0.4); } /* Серебро */
-        .place-3 .place-badge { background-color: #b45309; box-shadow: 0 2px 4px rgba(180, 83, 9, 0.4); } /* Бронза */
+        .place-1 .place-badge { background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 3px 6px rgba(245, 158, 11, 0.4); } /* Золото */
+        .place-2 .place-badge { background: linear-gradient(135deg, #cbd5e1, #94a3b8); box-shadow: 0 3px 6px rgba(148, 163, 184, 0.4); } /* Серебро */
+        .place-3 .place-badge { background: linear-gradient(135deg, #d97706, #92400e); box-shadow: 0 3px 6px rgba(146, 64, 14, 0.4); } /* Бронза */
         
-        .place-empty { color: var(--text-muted); font-weight: bold; }
+        .place-empty { color: var(--text-muted); font-weight: 700; }
 
         /* Стили для ФИО */
-        .athlete-name { text-align: left; font-weight: 600; color: var(--text-main); }
-        .athlete-org { font-size: 12px; color: var(--text-muted); font-weight: 400; display: block; margin-top: 2px; }
+        .athlete-name { text-align: left; font-weight: 700; color: var(--text-main); font-size: 15px;}
+        .athlete-org { font-size: 12px; color: var(--text-muted); font-weight: 500; display: block; margin-top: 4px; }
         
         /* Стили для цифр */
         .result-best { 
-            font-weight: 700; 
+            font-weight: 800; 
             color: var(--primary); 
-            font-size: 16px; 
-            background-color: #eff6ff;
-            border-radius: 6px;
-            padding: 4px 8px;
+            font-size: 17px; 
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-radius: 8px;
+            padding: 6px 12px;
             display: inline-block;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.5);
         }
-        .attempt-fail { color: var(--danger); font-weight: bold; }
-        .attempt-empty { color: #cbd5e1; }
+        .attempt-fail { color: var(--danger); font-weight: 800; }
+        .attempt-empty { color: #cbd5e1; font-weight: 700; }
         
         /* Адаптивность для телефонов */
         @media (max-width: 768px) {
-            body { padding: 10px; }
-            .event-header { padding: 14px 16px; font-size: 15px; }
-            th { padding: 10px 4px; font-size: 10px; }
-            td { padding: 10px 4px; font-size: 13px; }
-            .filter-box { flex-direction: column; gap: 12px; }
-            .filter-box select { width: 100%; }
-            .filter-box button { width: 100%; }
-            .athlete-org { display: none; } /* Скрываем организацию на телефонах для экономии места */
+            .page-title h1 { font-size: 24px; }
+            .event-header { padding: 15px; font-size: 15px; }
+            th { padding: 10px 5px; font-size: 10px; }
+            td { padding: 10px 5px; font-size: 13px; }
+            .filter-box { flex-direction: column; gap: 15px; padding: 15px; }
+            .filter-box select, .filter-box button { width: 100%; }
+            .athlete-org { display: none; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Результаты соревнований</h1>
+        
+        <div class="page-title">
+            <h1>Результаты соревнований</h1>
+            <p>Легкая атлетика • Город Абакан</p>
+        </div>
 
         <!-- Фильтры -->
         <div class="filter-box">
-            <form method="get" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; justify-content: center; width: 100%;">
+            <form method="get" style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap; justify-content: center; width: 100%;">
                 <div class="filter-group">
                     <label for="gender">Пол</label>
                     <select name="gender" id="gender">
-                        <option value="">Все</option>
+                        <option value="">Все спортсмены</option>
                         {% for g in genders %}
-                            <option value="{{ g }}" {% if selected_gender == g %}selected{% endif %}>{{ g }}</option>
+                            <option value="{{ g }}" {% if selected_gender == g %}selected{% endif %}>
+                                {% if g == 'М' %}Мужчины{% elif g == 'Ж' %}Женщины{% else %}{{ g }}{% endif %}
+                            </option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="filter-group">
                     <label for="category">Возрастная категория</label>
                     <select name="category" id="category">
-                        <option value="">Все</option>
+                        <option value="">Все категории</option>
                         {% for c in categories %}
                             <option value="{{ c }}" {% if selected_category == c %}selected{% endif %}>{{ c }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <button type="submit">Применить</button>
+                <button type="submit">Найти</button>
                 <a href="{% url 'spectator_results' %}">Сбросить</a>
             </form>
         </div>
