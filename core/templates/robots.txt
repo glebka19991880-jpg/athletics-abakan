@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /results/
+Disallow: /judge/
+Disallow: /admin/
