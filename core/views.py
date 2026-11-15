@@ -448,19 +448,26 @@ def spectator_results_ajax(request):
     return render(request, 'results_partial.html', {'events_data': events_data})
 
 
-# --- НОВАЯ ФУНКЦИЯ ДЛЯ СОЗДАНИЯ АДМИНА ---
+# --- НОВЫЕ ФУНКЦИИ ДЛЯ ИНИЦИАЛИЗАЦИИ БАЗЫ ---
+
+def run_migrations(request):
+    from django.core.management import call_command
+    import io
+    out = io.StringIO()
+    try:
+        call_command('makemigrations', 'core', stdout=out)
+        call_command('migrate', stdout=out)
+        return HttpResponse(f"<h1>Миграции выполнены успешно!</h1><pre>{out.getvalue()}</pre>")
+    except Exception as e:
+        return HttpResponse(f"<h1>Ошибка миграции:</h1><pre>{str(e)}</pre>")
+
 def create_admin(request):
     from django.contrib.auth import get_user_model
     User = get_user_model()
-    
     user, created = User.objects.get_or_create(username='admin')
     user.set_password('Abakan2026!')
     user.is_superuser = True
     user.is_staff = True
     user.is_active = True
     user.save()
-    
-    if created:
-        return HttpResponse("Администратор успешно создан! Теперь можете зайти в /admin/ (Логин: admin, Пароль: Abakan2026!)")
-    else:
-        return HttpResponse("Администратор уже существует. Пароль сброшен на Abakan2026!")
+    return HttpResponse("Администратор создан (или пароль сброшен). Логин: admin, Пароль: Abakan2026!")
