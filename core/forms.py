@@ -16,15 +16,15 @@ class ImportExcelForm(forms.Form):
         
         created_count = 0
         
-        # 1. Читаем заголовки видов из 2-й строки (начиная с 13-й колонки, т.е. M)
+        # Читаем заголовки видов из 2-й строки (начиная с 13-й колонки)
         event_columns = {}
         for idx, cell in enumerate(sheet[2]):
-            if idx >= 12 and cell.value: # Берем все колонки после L (12)
+            if idx >= 12 and cell.value: 
                 event_columns[idx] = str(cell.value).strip()
 
-        # 2. Проходим по спортсменам (с 3-й строки)
+        # Проходим по спортсменам
         for row in sheet.iter_rows(min_row=3, values_only=True):
-            if not row[3]: # Если нет ФИО
+            if not row[3]:
                 continue
                 
             full_name = str(row[3]).strip()
@@ -42,7 +42,6 @@ class ImportExcelForm(forms.Form):
             gender_raw = str(row[10]).strip().upper() if row[10] else "М"
             gender = "Ж" if gender_raw in ["Ж", "ЖЕН"] else "М"
 
-            # Создаем спортсмена (get_or_create защитит от дублей)
             athlete, created = Athlete.objects.get_or_create(
                 competition=comp,
                 full_name=full_name,
@@ -55,22 +54,18 @@ class ImportExcelForm(forms.Form):
                 }
             )
             
-            # Определяем возрастную категорию
             category = "2008 и ст."
             if birth_date:
                 year = birth_date.year
                 if year in [2009, 2010]: category = "2009-2010"
                 elif year in [2011, 2012]: category = "2011-2012"
 
-            # 3. Ищем заполненные ячейки с результатами
             for col_idx, event_name in event_columns.items():
                 if col_idx < len(row) and row[col_idx]:
                     declared_val = str(row[col_idx]).strip()
                     
-                    # Определяем, беговой это вид или технический
                     is_run = any(x in event_name.lower() for x in ['бег', 'метр', '100', '200', '400', '800', '1500', '3000', 'с/б'])
                     
-                    # Ищем вид в базе (или создаем)
                     event_obj, e_created = Event.objects.get_or_create(
                         competition=comp,
                         name=event_name,
@@ -82,7 +77,6 @@ class ImportExcelForm(forms.Form):
                         }
                     )
                     
-                    # Создаем результат с заявленным значением
                     Result.objects.update_or_create(
                         event=event_obj,
                         athlete=athlete,
