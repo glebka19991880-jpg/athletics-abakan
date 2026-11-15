@@ -44,7 +44,9 @@ class Result(models.Model):
     
     final_result = models.FloatField("Итоговый результат", null=True, blank=True)
     
-    # УДАЛЕНО ВСЁ ЛИШНЕЕ, ЧТО НЕ СУЩЕСТВУЕТ В БАЗЕ
+    # ВОЗВРАЩАЕМ ПОЛЯ, НО ДЕЛАЕМ ИХ НЕОБЯЗАТЕЛЬНЫМИ
+    place = models.IntegerField("Место", null=True, blank=True)
+    assigned_rank = models.CharField("Присвоенный разряд", max_length=20, blank=True)
 
 class ApiKey(models.Model):
     key = models.CharField(max_length=64, unique=True)
